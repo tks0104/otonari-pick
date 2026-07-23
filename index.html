@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="オ隣ピック集計">
+<meta name="theme-color" content="#166534">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>オ隣ピック集計</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0fdf4; color: #1e293b; }
+.container { max-width: 480px; margin: 0 auto; padding: 12px 8px 40px; min-height: 100vh; }
+
+.setup-card { background: #fff; border-radius: 16px; padding: 32px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+.setup-card input[type="date"] { width: 100%; max-width: 100%; }
+.logo-area { text-align: center; margin-bottom: 28px; }
+.logo-icon { font-size: 48px; display: block; margin-bottom: 8px; }
+.title { font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #166534; }
+.subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+.field { margin-bottom: 20px; overflow: hidden; }
+.label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 8px; letter-spacing: 0.5px; }
+.toggle-row { display: flex; gap: 8px; }
+.toggle-btn { flex: 1; padding: 10px 0; border: 2px solid #e2e8f0; border-radius: 10px; background: #fff; font-size: 15px; font-weight: 600; cursor: pointer; color: #64748b; transition: all 0.15s; }
+.toggle-btn.active { border-color: #16a34a; background: #f0fdf4; color: #166534; }
+.text-input, .name-input { display: block; width: 100%; max-width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; -webkit-appearance: none; appearance: none; }
+.text-input:focus, .name-input:focus { border-color: #16a34a; }
+.rate-select { width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; background: #fff; color: #1e293b; appearance: auto; }
+.rate-select:focus { border-color: #16a34a; }
+.points-ref { display: flex; flex-wrap: wrap; gap: 8px; }
+.point-chip { display: flex; gap: 4px; align-items: center; padding: 6px 10px; background: #f8fafc; border-radius: 8px; font-size: 13px; }
+.point-chip .pt-label { font-weight: 600; }
+.point-chip .pt-val { color: #64748b; }
+.start-btn { width: 100%; padding: 14px 0; background: #16a34a; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; letter-spacing: 1px; }
+.history-btn { width: 100%; padding: 12px 0; background: #fff; color: #166534; border: 2px solid #16a34a; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; }
+.back-btn { background: none; border: none; font-size: 14px; color: #16a34a; font-weight: 600; cursor: pointer; }
+.header-title { font-size: 17px; font-weight: 800; color: #166534; }
+.rate-badge { display: flex; align-items: center; gap: 4px; }
+.rate-inline { padding: 4px 8px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff; outline: none; color: #1e293b; }
+
+.game-info { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 12px; background: #fff; border-radius: 10px; font-size: 12px; color: #64748b; border: 1px solid #e2e8f0; }
+.game-info .gi-text { font-weight: 600; color: #475569; }
+
+.scoreboard { display: flex; gap: 6px; margin-bottom: 8px; }
+.score-card { flex: 1; background: #fff; border-radius: 12px; padding: 10px 6px; text-align: center; border: 2px solid #e2e8f0; transition: all 0.2s; }
+.score-card.leading { border-color: #16a34a; background: #f0fdf4; }
+.sc-name { font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-total { font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1.1; }
+.sc-sub { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+
+.money-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+.money-card { flex: 1; background: #fff; border-radius: 10px; padding: 8px 4px; text-align: center; border: 1px solid #e2e8f0; }
+.money-name { font-size: 10px; font-weight: 600; color: #94a3b8; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.money-amount { font-size: 16px; font-weight: 800; line-height: 1.2; }
+.money-amount.plus { color: #16a34a; }
+.money-amount.minus { color: #dc2626; }
+.money-amount.zero { color: #94a3b8; }
+
+.hole-selector { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-bottom: 12px; }
+.hole-btn { padding: 6px 0; border: none; border-radius: 8px; background: #f1f5f9; font-size: 12px; font-weight: 600; cursor: pointer; color: #64748b; transition: all 0.15s; }
+.hole-btn.active { background: #16a34a; color: #fff; }
+.hole-btn.filled { background: #dcfce7; color: #166534; }
+
+.hole-card { background: #fff; border-radius: 14px; padding: 16px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 16px; }
+.hole-card-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px; }
+.hole-number { font-size: 18px; font-weight: 800; color: #166534; }
+.multiplier-area { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; padding: 8px; background: #fefce8; border-radius: 10px; border: 1px solid #fde68a; }
+.multiplier-label { font-size: 13px; font-weight: 700; color: #92400e; }
+.multiplier-select { padding: 4px 8px; border: 2px solid #fbbf24; border-radius: 8px; font-size: 15px; font-weight: 800; background: #fff; color: #92400e; outline: none; }
+.multiplier-badge { font-size: 11px; font-weight: 800; color: #b45309; background: #fef3c7; padding: 1px 5px; border-radius: 4px; margin-left: 2px; }
+.hole-nav { background: #f1f5f9; border: none; border-radius: 8px; padding: 6px 12px; font-size: 14px; cursor: pointer; color: #475569; }
+.hole-nav:disabled { opacity: 0.3; cursor: default; }
+.player-row { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+.player-row:last-of-type { border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
+.player-label { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+.medal-section-label { font-size: 10px; font-weight: 600; color: #94a3b8; margin-bottom: 4px; margin-top: 6px; }
+.medal-row { display: flex; gap: 4px; }
+.medal-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border: 2px solid #e2e8f0; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.15s; }
+.medal-btn.selected { transform: scale(1.08); }
+.medal-btn .m-emoji { font-size: 18px; }
+.medal-btn .m-label { font-size: 10px; color: #94a3b8; font-weight: 400; }
+.medal-btn.selected .m-label { color: #1e293b; font-weight: 700; }
+.bonus-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.bonus-btn { display: flex; align-items: center; justify-content: center; padding: 8px 2px; border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer; transition: all 0.15s; font-size: 13px; font-weight: 600; color: #64748b; }
+.bonus-btn.selected { border-color: #7c3aed; background: #7c3aed15; color: #7c3aed; transform: scale(1.08); font-weight: 800; }
+.player-total-line { font-size: 12px; color: #475569; font-weight: 700; margin-top: 6px; text-align: right; }
+.next-hole-btn { width: 100%; padding: 12px 0; background: #16a34a; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+
+/* Error toast */
+.error-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #dc2626; color: #fff; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 9999; box-shadow: 0 4px 12px rgba(220,38,38,0.3); animation: toastIn 0.3s ease; max-width: 90%; text-align: center; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+.save-btn { width: 100%; padding: 14px 0; background: #2563eb; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 16px; letter-spacing: 0.5px; }
+.save-btn:active { background: #1d4ed8; }
+.save-msg { text-align: center; font-size: 13px; color: #16a34a; font-weight: 600; margin-top: 8px; }
+
+.table-wrap { background: #fff; border-radius: 14px; overflow-x: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px 6px; text-align: center; background: #166534; color: #fff; font-size: 12px; font-weight: 700; }
+th.th-hole { width: 32px; }
+td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+td.td-hole { font-weight: 700; color: #166534; background: #f0fdf4; width: 32px; }
+tr.highlight { background: #ecfdf5; }
+tr.front-back { background: #f0fdf4; font-weight: 700; }
+tr.total-row { background: #dcfce7; font-weight: 800; }
+tr.total-row td { font-size: 16px; }
+tr.money-row { background: #fefce8; font-weight: 800; }
+tr.money-row td { font-size: 14px; }
+td.leading { color: #16a34a; }
+td.money-plus { color: #16a34a; font-weight: 800; }
+td.money-minus { color: #dc2626; font-weight: 800; }
+td.money-zero { color: #94a3b8; font-weight: 800; }
+.medal-cell { font-size: 12px; white-space: nowrap; }
+.medal-cell .pts { font-size: 11px; color: #64748b; }
+.medal-cell .bonus-tag { font-size: 10px; color: #7c3aed; font-weight: 700; }
+
+.history-card { background: #fff; border-radius: 16px; padding: 24px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.history-title { font-size: 18px; font-weight: 800; color: #166534; }
+.history-empty { text-align: center; color: #94a3b8; font-size: 14px; padding: 32px 0; }
+.history-item { border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
+.history-item:active { background: #f0fdf4; border-color: #16a34a; }
+.hi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.hi-date { font-size: 13px; font-weight: 700; color: #475569; }
+.hi-course { font-size: 14px; font-weight: 800; color: #166534; }
+.hi-players { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+.hi-results { display: flex; gap: 8px; flex-wrap: wrap; }
+.hi-result { font-size: 12px; font-weight: 700; }
+.hi-result.plus { color: #16a34a; }
+.hi-result.minus { color: #dc2626; }
+.hi-result.zero { color: #94a3b8; }
+.hi-actions { display: flex; gap: 8px; margin-top: 8px; }
+.hi-delete { background: none; border: 1px solid #fca5a5; border-radius: 8px; color: #dc2626; font-size: 11px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div id="setup-screen" class="setup-card">
+    <div class="logo-area">
+      <span class="logo-icon">⛳</span>
+      <h1 class="title">オ隣ピック集計</h1>
+      <p class="subtitle">スコア自動計算</p>
+    </div>
+    <div class="field"><label class="label">日付</label><input type="date" class="text-input" id="input-date"></div>
+    <div class="field"><label class="label">ゴルフ場名</label><input type="text" class="text-input" id="input-course" placeholder="例：霞ヶ関カンツリー倶楽部"></div>
+    <div class="field">
+      <label class="label">プレイヤー人数</label>
+      <div class="toggle-row">
+        <button class="toggle-btn" onclick="setPlayerCount(3)" id="btn-3p">3人</button>
+        <button class="toggle-btn active" onclick="setPlayerCount(4)" id="btn-4p">4人</button>
+      </div>
+    </div>
+    <div class="field"><label class="label">プレイヤー名</label><div id="name-inputs"></div></div>
+    <div class="field">
+      <label class="label">レート（1メダルpt あたり）</label>
+      <select class="rate-select" id="rate-setup" onchange="rate = Number(this.value)">
+        <option value="100">¥100</option><option value="200">¥200</option><option value="300">¥300</option><option value="400">¥400</option><option value="500">¥500</option>
+      </select>
+    </div>
+    <div class="field"><label class="label">ポイント配分</label><div id="points-ref" class="points-ref"></div></div>
+    <button class="start-btn" onclick="startGame()">スタート</button>
+    <button class="history-btn" onclick="showHistory()" id="history-open-btn">📋 保存した記録を見る</button>
+  </div>
+
+  <div id="game-screen" class="hidden">
+    <div class="header">
+      <button class="back-btn" onclick="backToSetup()">← 設定</button>
+      <h2 class="header-title">⛳ オ隣ピック集計</h2>
+      <div class="rate-badge">
+        <select class="rate-inline" id="rate-game" onchange="changeRate(this.value)">
+          <option value="100">¥100</option><option value="200">¥200</option><option value="300">¥300</option><option value="400">¥400</option><option value="500">¥500</option>
+        </select>
+      </div>
+    </div>
+    <div id="game-info" class="game-info"></div>
+    <div id="scoreboard" class="scoreboard"></div>
+    <div id="money-bar" class="money-bar"></div>
+    <div id="hole-selector" class="hole-selector"></div>
+    <div id="hole-card" class="hole-card"></div>
+    <div class="table-wrap"><table id="detail-table"></table></div>
+    <button class="save-btn" onclick="saveRecord()">💾 この記録を保存する</button>
+    <div id="save-msg" class="save-msg hidden"></div>
+  </div>
+
+  <div id="history-screen" class="hidden history-card">
+    <div class="history-header">
+      <h2 class="history-title">📋 保存記録</h2>
+      <button class="back-btn" onclick="closeHistory()">← 戻る</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<script>
+const MEDALS_4 = [
+  { key: "none", label: "—", emoji: "", points: 0, color: "transparent" },
+  { key: "iron", label: "鉄", emoji: "⚙️", points: 1, color: "#78716c" },
+  { key: "bronze", label: "銅", emoji: "🥉", points: 2, color: "#b45309" },
+  { key: "silver", label: "銀", emoji: "🥈", points: 3, color: "#94a3b8" },
+  { key: "gold", label: "金", emoji: "🥇", points: 4, color: "#ca8a04" },
+  { key: "diamond", label: "ダイヤ", emoji: "💎", points: 8, color: "#2563eb" },
+];
+const MEDALS_3 = [
+  { key: "none", label: "—", emoji: "", points: 0, color: "transparent" },
+  { key: "bronze", label: "銅", emoji: "🥉", points: 1, color: "#b45309" },
+  { key: "silver", label: "銀", emoji: "🥈", points: 2, color: "#94a3b8" },
+  { key: "gold", label: "金", emoji: "🥇", points: 3, color: "#ca8a04" },
+  { key: "diamond", label: "ダイヤ", emoji: "💎", points: 6, color: "#2563eb" },
+];
+// Keys that must NOT be duplicated on the same hole
+const UNIQUE_MEDALS = ["iron", "bronze", "silver", "gold"];
+const BONUS_OPTIONS = [0,1,2,3,4,5,6,7,8,9,10];
+
+let playerCount = 4, names = ["A","B","C","D"], scores = {}, bonuses = {}, multipliers = {};
+let activeHole = 1, rate = 100, gameDate = "", courseName = "", currentRecordId = null;
+const STORAGE_KEY = "golf_olympic_records";
+
+function getMedals() { return playerCount === 3 ? MEDALS_3 : MEDALS_4; }
+function initScores() {
+  scores = {}; bonuses = {}; multipliers = {};
+  for (let h = 1; h <= 18; h++) { scores[h] = {}; bonuses[h] = {}; multipliers[h] = 1; for (let p = 0; p < playerCount; p++) { scores[h][p] = "none"; bonuses[h][p] = 0; } }
+}
+function findMedal(key) { return getMedals().find(m => m.key === key) || getMedals()[0]; }
+function holePoints(h, p) { return findMedal(scores[h]?.[p]).points * (multipliers[h]||1) + (bonuses[h]?.[p]||0); }
+function calcTotals(from, to) { const t = Array(playerCount).fill(0); for (let h = from; h <= to; h++) for (let p = 0; p < playerCount; p++) t[p] += holePoints(h, p); return t; }
+function calcMoney(totals) { const a = totals.reduce((s,v) => s+v, 0); return totals.map(o => (o*playerCount - a)*rate); }
+function formatMoney(v) { return (v>0?"+":"") + "¥" + v.toLocaleString(); }
+function todayStr() { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function loadRecords() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; } catch(e) { return []; } }
+function saveRecords(r) { localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
+function updateHistoryBtn() { document.getElementById("history-open-btn").style.display = loadRecords().length > 0 ? "block" : "none"; }
+
+// Error toast
+function showError(msg) {
+  const el = document.createElement("div");
+  el.className = "error-toast";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => { el.remove(); }, 2500);
+}
+
+// Check if medal is already taken by another player on same hole
+function checkDuplicate(hole, player, key) {
+  if (key === "none" || key === "diamond") return false;
+  // If someone has diamond, block lowest medal (iron for 4p, bronze for 3p)
+  const lowestKey = playerCount === 4 ? "iron" : "bronze";
+  if (key === lowestKey) {
+    for (let p = 0; p < playerCount; p++) {
+      if (scores[hole][p] === "diamond") {
+        const lowestLabel = findMedal(lowestKey).label;
+        showError("⚠️ ダイヤ取得者がいるため " + lowestLabel + " は選択できません");
+        return true;
+      }
+    }
+  }
+  for (let p = 0; p < playerCount; p++) {
+    if (p !== player && scores[hole][p] === key) {
+      const medalLabel = findMedal(key).label;
+      const takerName = names[p];
+      showError("⚠️ " + medalLabel + " は " + takerName + " が既に取得しています");
+      return true;
+    }
+  }
+  return false;
+}
+
+function setPlayerCount(n) {
+  playerCount = n;
+  document.getElementById("btn-3p").className = "toggle-btn" + (n===3?" active":"");
+  document.getElementById("btn-4p").className = "toggle-btn" + (n===4?" active":"");
+  renderNameInputs(); renderPointsRef();
+}
+function renderNameInputs() {
+  const box = document.getElementById("name-inputs"); box.innerHTML = "";
+  for (let i = 0; i < playerCount; i++) { const inp = document.createElement("input"); inp.className = "name-input"; inp.value = names[i]||""; inp.placeholder = "プレイヤー "+(i+1); inp.oninput = function(){ names[i]=this.value; }; box.appendChild(inp); }
+}
+function renderPointsRef() {
+  const box = document.getElementById("points-ref");
+  let html = getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");
+  html += `<div class="point-chip"><span>🏅</span><span class="pt-label">追加</span><span class="pt-val">1〜10pt</span></div>`;
+  box.innerHTML = html;
+}
+function changeRate(val) { rate=Number(val); document.getElementById("rate-setup").value=rate; document.getElementById("rate-game").value=rate; renderAll(); }
+
+function startGame() {
+  document.querySelectorAll("#name-inputs .name-input").forEach((inp,i)=>{ names[i]=inp.value||("P"+(i+1)); });
+  gameDate = document.getElementById("input-date").value||todayStr();
+  courseName = document.getElementById("input-course").value||"";
+  initScores(); activeHole=1; currentRecordId=null;
+  document.getElementById("rate-game").value=rate;
+  document.getElementById("setup-screen").classList.add("hidden");
+  document.getElementById("history-screen").classList.add("hidden");
+  document.getElementById("game-screen").classList.remove("hidden");
+  document.getElementById("save-msg").classList.add("hidden");
+  renderAll();
+}
+function backToSetup() {
+  document.getElementById("game-screen").classList.add("hidden");
+  document.getElementById("setup-screen").classList.remove("hidden");
+  updateHistoryBtn();
+}
+function renderAll() { renderGameInfo(); renderScoreboard(); renderMoneyBar(); renderHoleSelector(); renderHoleCard(); renderTable(); }
+
+function renderGameInfo() {
+  const box = document.getElementById("game-info"); const dd = gameDate?gameDate.replace(/-/g,"/"):""; const parts = [];
+  if (dd) parts.push(`<span class="gi-text">📅 ${dd}</span>`);
+  if (courseName) parts.push(`<span class="gi-text">🏌️ ${courseName}</span>`);
+  box.innerHTML = parts.join('<span style="color:#e2e8f0;margin:0 4px">|</span>'); box.style.display = parts.length?"flex":"none";
+}
+function renderScoreboard() {
+  const totals=calcTotals(1,18), front=calcTotals(1,9), back=calcTotals(10,18), max=Math.max(...totals), box=document.getElementById("scoreboard"); box.innerHTML="";
+  for (let i=0;i<playerCount;i++) { const ld=totals[i]===max&&max>0; box.innerHTML+=`<div class="score-card${ld?" leading":""}"><div class="sc-name">${ld?"👑 ":""}${names[i]}</div><div class="sc-total">${totals[i]}</div><div class="sc-sub">前半 ${front[i]} / 後半 ${back[i]}</div></div>`; }
+}
+function renderMoneyBar() {
+  const totals=calcTotals(1,18), money=calcMoney(totals), box=document.getElementById("money-bar"); box.innerHTML="";
+  for (let i=0;i<playerCount;i++) { const c=money[i]>0?"plus":money[i]<0?"minus":"zero"; box.innerHTML+=`<div class="money-card"><div class="money-name">${names[i]}</div><div class="money-amount ${c}">${formatMoney(money[i])}</div></div>`; }
+}
+function renderHoleSelector() {
+  const box=document.getElementById("hole-selector"); box.innerHTML="";
+  for (let h=1;h<=18;h++) { const has=Array.from({length:playerCount}).some((_,p)=>(scores[h]?.[p]&&scores[h][p]!=="none")||(bonuses[h]?.[p]>0)); let c="hole-btn"; if(h===activeHole)c+=" active"; else if(has)c+=" filled"; box.innerHTML+=`<button class="${c}" onclick="goHole(${h})">${h}</button>`; }
+}
+function goHole(h) { activeHole=h; renderAll(); }
+
+function renderHoleCard() {
+  const medals=getMedals(), box=document.getElementById("hole-card"), mul=multipliers[activeHole]||1;
+  let mulOpts=""; for(let i=1;i<=10;i++) mulOpts+=`<option value="${i}"${mul===i?" selected":""}>${i}倍</option>`;
+  let html=`<div class="hole-card-header"><button class="hole-nav" onclick="goHole(${Math.max(1,activeHole-1)})" ${activeHole===1?"disabled":""}>◀</button><h3 class="hole-number">Hole ${activeHole}</h3><button class="hole-nav" onclick="goHole(${Math.min(18,activeHole+1)})" ${activeHole===18?"disabled":""}>▶</button></div>
+    <div class="multiplier-area"><span class="multiplier-label">倍率（メダルのみ適用）</span><select class="multiplier-select" onchange="setMultiplier(${activeHole},Number(this.value))">${mulOpts}</select></div>`;
+
+  for (let p=0;p<playerCount;p++) {
+    const cm=scores[activeHole]?.[p]||"none", cb=bonuses[activeHole]?.[p]||0, mp=findMedal(cm).points, tp=mp*mul+cb;
+    html+=`<div class="player-row"><div class="player-label">${names[p]}</div>`;
+    html+=`<div class="medal-section-label">メダル${mul>1?` <span class="multiplier-badge">×${mul}</span>`:""}</div><div class="medal-row">`;
+    for(const m of medals){ const sel=cm===m.key; let st=""; if(sel&&m.key!=="none")st=`background:${m.color}22;border-color:${m.color};`; else if(sel)st="background:#f1f5f9;border-color:#cbd5e1;";
+      html+=`<button class="medal-btn${sel?" selected":""}" style="${st}" onclick="selectMedal(${activeHole},${p},'${m.key}')"><span class="m-emoji" style="font-size:${m.key==="none"?14:18}px">${m.key==="none"?"—":m.emoji}</span><span class="m-label">${m.key==="none"?"なし":m.label}</span></button>`; }
+    html+=`</div>`;
+    html+=`<div class="medal-section-label">追加メダル 🏅（倍率対象外）</div><div class="bonus-row">`;
+    for(const b of BONUS_OPTIONS){ const sel=cb===b; html+=`<button class="bonus-btn${sel?" selected":""}" onclick="selectBonus(${activeHole},${p},${b})">${b===0?"—":b}</button>`; }
+    html+=`</div>`;
+    if(tp>0){ let det=""; if(mp>0&&mul>1)det=`（メダル ${mp}×${mul}=${mp*mul}${cb>0?` + 追加${cb}`:""}`+`）`; html+=`<div class="player-total-line">このホール: +${tp}pt ${det}</div>`; }
+    html+=`</div>`;
+  }
+  if(activeHole<18) html+=`<button class="next-hole-btn" onclick="goHole(${activeHole+1})">次のホールへ →</button>`;
+  box.innerHTML=html;
+}
+
+function selectMedal(hole, player, key) {
+  if (checkDuplicate(hole, player, key)) return;
+  scores[hole][player] = key;
+  renderAll();
+}
+function selectBonus(hole, player, val) { bonuses[hole][player]=val; renderAll(); }
+function setMultiplier(hole, val) { multipliers[hole]=val; renderAll(); }
+
+function renderTable() {
+  const totals=calcTotals(1,18), front=calcTotals(1,9), back=calcTotals(10,18), money=calcMoney(totals), max=Math.max(...totals);
+  let html=`<thead><tr><th class="th-hole">H</th>`; for(let p=0;p<playerCount;p++)html+=`<th>${names[p]}</th>`; html+=`</tr></thead><tbody>`;
+  for(let h=1;h<=18;h++){ const mul=multipliers[h]||1, mt=mul>1?`<span class="multiplier-badge">×${mul}</span>`:"";
+    html+=`<tr class="${h===activeHole?"highlight":""}" onclick="goHole(${h})" style="cursor:pointer"><td class="td-hole">${h}${mt}</td>`;
+    for(let p=0;p<playerCount;p++){ const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0; let c=""; if(m.key!=="none")c+=m.emoji; if(b>0)c+=(c?" ":"")+`<span class="bonus-tag">🏅${b}</span>`; const t=m.points*mul+b; if(t>0)c+=` <span class="pts">+${t}</span>`; html+=`<td class="medal-cell">${c}</td>`; }
+    html+=`</tr>`; }
+  html+=`<tr class="front-back"><td class="td-hole">前半</td>`; for(let p=0;p<playerCount;p++)html+=`<td>${front[p]}</td>`; html+=`</tr>`;
+  html+=`<tr class="front-back"><td class="td-hole">後半</td>`; for(let p=0;p<playerCount;p++)html+=`<td>${back[p]}</td>`; html+=`</tr>`;
+  html+=`<tr class="total-row"><td class="td-hole">合計</td>`; for(let p=0;p<playerCount;p++){const ld=totals[p]===max&&max>0; html+=`<td${ld?' class="leading"':""}>${totals[p]}</td>`;} html+=`</tr>`;
+  html+=`<tr class="money-row"><td class="td-hole" style="font-size:11px">収支</td>`; for(let p=0;p<playerCount;p++){const c=money[p]>0?"money-plus":money[p]<0?"money-minus":"money-zero"; html+=`<td class="${c}">${formatMoney(money[p])}</td>`;} html+=`</tr></tbody>`;
+  document.getElementById("detail-table").innerHTML=html;
+}
+
+function saveRecord() {
+  const totals=calcTotals(1,18), money=calcMoney(totals);
+  const rec={id:currentRecordId||Date.now(),date:gameDate,course:courseName,playerCount,names:names.slice(0,playerCount),scores:JSON.parse(JSON.stringify(scores)),bonuses:JSON.parse(JSON.stringify(bonuses)),multipliers:JSON.parse(JSON.stringify(multipliers)),rate,totals,money};
+  const recs=loadRecords(); const idx=recs.findIndex(r=>r.id===rec.id); if(idx>=0)recs[idx]=rec; else recs.unshift(rec); saveRecords(recs); currentRecordId=rec.id;
+  const msg=document.getElementById("save-msg"); msg.textContent="✅ 保存しました"; msg.classList.remove("hidden"); setTimeout(()=>msg.classList.add("hidden"),2500);
+}
+function showHistory(){ document.getElementById("setup-screen").classList.add("hidden"); document.getElementById("history-screen").classList.remove("hidden"); renderHistory(); }
+function closeHistory(){ document.getElementById("history-screen").classList.add("hidden"); document.getElementById("setup-screen").classList.remove("hidden"); updateHistoryBtn(); }
+function renderHistory(){
+  const recs=loadRecords(), box=document.getElementById("history-list");
+  if(!recs.length){box.innerHTML='<div class="history-empty">保存された記録はありません</div>';return;}
+  box.innerHTML=recs.map(r=>{
+    const res=r.names.map((n,i)=>{const v=r.money[i],c=v>0?"plus":v<0?"minus":"zero";return`<span class="hi-result ${c}">${n}: ${formatMoney(v)}</span>`;}).join("");
+    return`<div class="history-item" onclick="loadRecord(${r.id})"><div class="hi-top"><span class="hi-date">${(r.date||"").replace(/-/g,"/")}</span><span class="hi-course">${r.course||"—"}</span></div><div class="hi-players">${r.names.join(", ")}（${r.playerCount}人 / ¥${r.rate}）</div><div class="hi-results">${res}</div><div class="hi-actions"><button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})">🗑 削除</button></div></div>`;
+  }).join("");
+}
+function loadRecord(id){
+  const r=loadRecords().find(x=>x.id===id); if(!r)return;
+  playerCount=r.playerCount; names=[...r.names]; while(names.length<4)names.push("");
+  scores=JSON.parse(JSON.stringify(r.scores)); bonuses=r.bonuses?JSON.parse(JSON.stringify(r.bonuses)):{}; multipliers=r.multipliers?JSON.parse(JSON.stringify(r.multipliers)):{};
+  for(let h=1;h<=18;h++){if(!bonuses[h]){bonuses[h]={};for(let p=0;p<playerCount;p++)bonuses[h][p]=0;}if(!multipliers[h])multipliers[h]=1;}
+  rate=r.rate; gameDate=r.date||""; courseName=r.course||""; activeHole=1; currentRecordId=r.id;
+  document.getElementById("rate-game").value=rate;
+  document.getElementById("history-screen").classList.add("hidden"); document.getElementById("setup-screen").classList.add("hidden"); document.getElementById("game-screen").classList.remove("hidden"); document.getElementById("save-msg").classList.add("hidden"); renderAll();
+}
+function deleteRecord(id){ if(!confirm("この記録を削除しますか？"))return; saveRecords(loadRecords().filter(r=>r.id!==id)); renderHistory(); }
+
+document.getElementById("input-date").value=todayStr(); renderNameInputs(); renderPointsRef(); updateHistoryBtn();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
