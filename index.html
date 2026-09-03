@@ -298,6 +298,7 @@ function renderNameInputs(){
     inp.setAttribute("list","member-datalist");
     inp.setAttribute("autocomplete","off");
     inp.oninput=function(){names[i]=this.value;};
+    inp.onfocus=function(){if(["A","B","C","D"].includes(this.value)){this.value="";names[i]="";}};
     box.appendChild(inp);
   }
 }
