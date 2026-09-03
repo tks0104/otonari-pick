@@ -51,6 +51,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .member-name { font-size: 15px; font-weight: 600; color: #1e293b; }
 .member-del { background: none; border: 1px solid #fca5a5; border-radius: 8px; color: #dc2626; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
 .member-empty { text-align: center; color: #94a3b8; font-size: 14px; padding: 20px 0; }
+.name-field { margin-bottom: 12px; }
+.name-field-label { font-size: 11px; color: #94a3b8; font-weight: 600; margin-bottom: 4px; }
+.member-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.member-chip { padding: 6px 12px; border: 2px solid #e2e8f0; border-radius: 20px; background: #fff; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.15s; }
+.member-chip:active { background: #f0fdf4; border-color: #16a34a; }
+.member-chip.used { opacity: 0.35; pointer-events: none; }
 
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; }
 .back-btn { background: none; border: none; font-size: 14px; color: #16a34a; font-weight: 600; cursor: pointer; }
@@ -316,20 +322,41 @@ function resetNames(){names=["A","B","C","D"];renderNameInputs();}
 function renderNameInputs(){
   const box=document.getElementById("name-inputs");box.innerHTML="";
   const members=loadMembers();
-  let dlHtml='<datalist id="member-datalist">';
-  members.forEach(m=>{dlHtml+=`<option value="${m}">`;});
-  dlHtml+='</datalist>';
-  box.innerHTML=dlHtml;
   for(let i=0;i<playerCount;i++){
+    const field=document.createElement("div");field.className="name-field";
+    const label=document.createElement("div");label.className="name-field-label";label.textContent="プレイヤー "+(i+1);
+    field.appendChild(label);
     const inp=document.createElement("input");
     inp.className="name-input";
     inp.value=names[i]||"";
-    inp.placeholder="プレイヤー "+(i+1);
-    inp.setAttribute("list","member-datalist");
-    inp.setAttribute("autocomplete","off");
-    inp.oninput=function(){names[i]=this.value;};
-    inp.onfocus=function(){if(["A","B","C","D"].includes(this.value)){this.value="";names[i]="";}};
-    box.appendChild(inp);
+    inp.placeholder="名前を入力";
+    inp.id="name-input-"+i;
+    inp.oninput=function(){names[i]=this.value;updateChips();};
+    inp.onfocus=function(){if(["A","B","C","D"].includes(this.value)){this.value="";names[i]="";updateChips();}};
+    field.appendChild(inp);
+    if(members.length>0){
+      const chips=document.createElement("div");chips.className="member-chips";chips.id="chips-"+i;
+      field.appendChild(chips);
+    }
+    box.appendChild(field);
+  }
+  updateChips();
+}
+function updateChips(){
+  const members=loadMembers();
+  if(!members.length)return;
+  const usedNames=names.slice(0,playerCount).filter(n=>n&&!["A","B","C","D"].includes(n));
+  for(let i=0;i<playerCount;i++){
+    const chips=document.getElementById("chips-"+i);
+    if(!chips)continue;
+    chips.innerHTML="";
+    members.forEach(m=>{
+      const btn=document.createElement("button");btn.className="member-chip";btn.textContent=m;btn.type="button";
+      if(names[i]===m){btn.style.borderColor="#16a34a";btn.style.background="#f0fdf4";btn.style.color="#166534";}
+      else if(usedNames.includes(m)){btn.classList.add("used");}
+      btn.onclick=function(){names[i]=m;document.getElementById("name-input-"+i).value=m;updateChips();};
+      chips.appendChild(btn);
+    });
   }
 }
 function renderPointsRef(){const box=document.getElementById("points-ref");let html=getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");html+=`<div class="point-chip"><span style="color:#2563eb">📈</span><span class="pt-label">追加</span><span class="pt-val">1〜10</span></div>`;html+=`<div class="point-chip"><span>📉</span><span class="pt-label">マイナスメダル</span><span class="pt-val">-1〜-12</span></div>`;box.innerHTML=html;}
