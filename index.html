@@ -90,9 +90,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .multiplier-badge { font-size: 11px; font-weight: 800; color: #b45309; background: #fef3c7; padding: 1px 5px; border-radius: 4px; margin-left: 2px; }
 .hole-nav { background: #f1f5f9; border: none; border-radius: 8px; padding: 6px 12px; font-size: 14px; cursor: pointer; color: #475569; }
 .hole-nav:disabled { opacity: 0.3; cursor: default; }
-.player-row { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+.player-row { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 3px solid #cbd5e1; }
 .player-row:last-of-type { border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
-.player-label { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+.player-label { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
 .medal-section-label { font-size: 10px; font-weight: 600; color: #94a3b8; margin-bottom: 4px; margin-top: 6px; }
 .medal-row { display: flex; gap: 4px; }
 .medal-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border: 2px solid #e2e8f0; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.15s; }
@@ -302,7 +302,7 @@ function renderNameInputs(){
     box.appendChild(inp);
   }
 }
-function renderPointsRef(){const box=document.getElementById("points-ref");let html=getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");html+=`<div class="point-chip"><span>🏅</span><span class="pt-label">追加</span><span class="pt-val">1〜10</span></div>`;html+=`<div class="point-chip"><span>📉</span><span class="pt-label">マイナスメダル</span><span class="pt-val">-1〜-12</span></div>`;box.innerHTML=html;}
+function renderPointsRef(){const box=document.getElementById("points-ref");let html=getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");html+=`<div class="point-chip"><span style="color:#2563eb">📈</span><span class="pt-label">追加</span><span class="pt-val">1〜10</span></div>`;html+=`<div class="point-chip"><span>📉</span><span class="pt-label">マイナスメダル</span><span class="pt-val">-1〜-12</span></div>`;box.innerHTML=html;}
 function changeRate(val){rate=Number(val);document.getElementById("rate-setup").value=rate;document.getElementById("rate-game").value=rate;renderAll();}
 
 function startGame(){
@@ -335,19 +335,19 @@ function renderHoleCard(){
   const medals=getMedals(),box=document.getElementById("hole-card"),mul=multipliers[activeHole]||1;
   let mulOpts="";for(let i=1;i<=10;i++)mulOpts+=`<option value="${i}"${mul===i?" selected":""}>${i}倍</option>`;
   let html=`<div class="hole-card-header"><button class="hole-nav" onclick="goHole(${Math.max(1,activeHole-1)})" ${activeHole===1?"disabled":""}>◀</button><h3 class="hole-number">Hole ${activeHole}</h3><button class="hole-nav" onclick="goHole(${Math.min(18,activeHole+1)})" ${activeHole===18?"disabled":""}>▶</button></div>
-    <div class="multiplier-area"><span class="multiplier-label">倍率（メダルのみ適用）</span><select class="multiplier-select" onchange="setMultiplier(${activeHole},Number(this.value))">${mulOpts}</select></div>`;
+    <div class="multiplier-area"><span class="multiplier-label">倍率（メダル・マイナスメダルに適用）</span><select class="multiplier-select" onchange="setMultiplier(${activeHole},Number(this.value))">${mulOpts}</select></div>`;
 
   for(let p=0;p<playerCount;p++){
     const cm=scores[activeHole]?.[p]||"none",cb=bonuses[activeHole]?.[p]||0,cmn=minuses[activeHole]?.[p]||0;
     const mp=findMedal(cm).points,tp=mp*mul+cb+cmn*mul;
     html+=`<div class="player-row"><div class="player-label">${names[p]}</div>`;
     // Medal row
-    html+=`<div class="medal-section-label">メダル${mul>1?` <span class="multiplier-badge">×${mul}</span>`:""}</div><div class="medal-row">`;
+    html+=`<div class="medal-section-label">メダル 🏅${mul>1?` <span class="multiplier-badge">×${mul}</span>`:""}</div><div class="medal-row">`;
     for(const m of medals){const sel=cm===m.key;let st="";if(sel&&m.key!=="none")st=`background:${m.color}22;border-color:${m.color};`;else if(sel)st="background:#f1f5f9;border-color:#cbd5e1;";
       html+=`<button class="medal-btn${sel?" selected":""}" style="${st}" onclick="selectMedal(${activeHole},${p},'${m.key}')"><span class="m-emoji" style="font-size:${m.key==="none"?14:18}px">${m.key==="none"?"—":m.emoji}</span><span class="m-label">${m.key==="none"?"なし":m.label}</span></button>`;}
     html+=`</div>`;
     // Bonus row
-    html+=`<div class="medal-section-label">追加メダル 🏅（倍率対象外）</div><div class="bonus-row">`;
+    html+=`<div class="medal-section-label">追加メダル <span style="color:#2563eb">📈</span>（倍率対象外）</div><div class="bonus-row">`;
     for(const b of BONUS_OPTIONS){const sel=cb===b;html+=`<button class="bonus-btn${sel?" selected":""}" onclick="selectBonus(${activeHole},${p},${b})">${b===0?"—":b}</button>`;}
     html+=`</div>`;
     // Minus row
@@ -358,7 +358,7 @@ function renderHoleCard(){
     if(tp!==0){html+=`<div class="player-total-line" style="color:${tp<0?"#dc2626":"#475569"}">このホール: ${tp>0?"+":""}${tp}pt</div>`;}
     html+=`</div>`;
   }
-  if(activeHole<18)html+=`<button class="next-hole-btn" onclick="goHole(${activeHole+1})">次のホールへ →</button>`;
+  if(activeHole<18)html+=`<button class="next-hole-btn" onclick="goHole(${activeHole+1});window.scrollTo(0,0)">次のホールへ →</button>`;
   box.innerHTML=html;
 }
 
