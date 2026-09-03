@@ -356,7 +356,13 @@ function renderPointsRef(){const box=document.getElementById("points-ref");let h
 function changeRate(val){rate=Number(val);document.getElementById("rate-setup").value=rate;document.getElementById("rate-game").value=rate;renderAll();}
 
 function startGame(){
-  document.querySelectorAll("#name-inputs .name-input").forEach((inp,i)=>{names[i]=inp.value||("P"+(i+1));});
+  for(let i=0;i<playerCount;i++){
+    const sel=document.getElementById("name-select-"+i);
+    const inp=document.getElementById("name-input-"+i);
+    if(sel&&sel.style.display!=="none"&&sel.value&&sel.value!=="__custom__"){names[i]=sel.value;}
+    else if(inp&&inp.style.display!=="none"&&inp.value){names[i]=inp.value;}
+    if(!names[i]||["A","B","C","D"].includes(names[i]))names[i]="P"+(i+1);
+  }
   gameDate=document.getElementById("input-date").value||todayStr();courseName=document.getElementById("input-course").value||"";
   initScores();activeHole=1;currentRecordId=null;document.getElementById("rate-game").value=rate;
   document.getElementById("setup-screen").classList.add("hidden");document.getElementById("history-screen").classList.add("hidden");
