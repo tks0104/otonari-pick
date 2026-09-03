@@ -402,7 +402,7 @@ function renderTable(){
   let html=`<thead><tr><th class="th-hole">H</th>`;for(let p=0;p<playerCount;p++)html+=`<th>${names[p]}</th>`;html+=`</tr></thead><tbody>`;
   for(let h=1;h<=18;h++){const mul=multipliers[h]||1,mt=mul>1?`<span class="multiplier-badge">×${mul}</span>`:"";
     html+=`<tr class="${h===activeHole?"highlight":""}" onclick="goHole(${h})" style="cursor:pointer"><td class="td-hole">${h}${mt}</td>`;
-    for(let p=0;p<playerCount;p++){const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0,mn=minuses[h]?.[p]||0;let c="";if(m.key!=="none")c+=m.emoji;const t=m.points*mul+b+mn*mul;if(t!==0){const color=t<0?"color:#dc2626":"";c+=` <span class="pts" style="${color}">${t>0?"+":""}${t}</span>`;}html+=`<td class="medal-cell">${c}</td>`;}
+    for(let p=0;p<playerCount;p++){const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0,mn=minuses[h]?.[p]||0;const t=m.points*mul+b+mn*mul;let parts=[];if(m.key!=="none")parts.push(m.emoji);if(b>0)parts.push(`<span style="color:#2563eb">＋${b}</span>`);if(mn<0)parts.push(`<span style="color:#dc2626">▲${Math.abs(mn)}</span>`);let c="";if(parts.length||t!==0){c=`<div style="font-size:11px;line-height:1.3">${parts.join(" ")}</div>`;if(t!==0){const color=t>0?"color:#1e293b":t<0?"color:#dc2626":"";c+=`<div style="font-weight:800;font-size:13px;${color}">${t>0?"+":""}${t}</div>`;}}html+=`<td class="medal-cell">${c}</td>`;}
     html+=`</tr>`;}
   html+=`<tr class="front-back"><td class="td-hole">前半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${front[p]}</td>`;html+=`</tr>`;
   html+=`<tr class="front-back"><td class="td-hole">後半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${back[p]}</td>`;html+=`</tr>`;
