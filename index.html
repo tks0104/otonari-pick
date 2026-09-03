@@ -138,6 +138,19 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
 .medal-cell .minus-tag { font-size: 10px; color: #dc2626; font-weight: 700; }
 
 .history-card { background: #fff; border-radius: 16px; padding: 24px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.summary-section { background: #f8fafc; border-radius: 12px; padding: 14px; border: 1px solid #e2e8f0; }
+.summary-title { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
+.summary-controls { display: flex; gap: 8px; margin-bottom: 12px; }
+.summary-select { flex: 1; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-weight: 600; outline: none; background: #fff; }
+.summary-select:focus { border-color: #2563eb; }
+.summary-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.summary-table th { padding: 8px 6px; text-align: center; background: #2563eb; color: #fff; font-size: 12px; font-weight: 700; }
+.summary-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #e2e8f0; font-weight: 600; }
+.summary-table tr:last-child td { border-bottom: none; }
+.summary-plus { color: #16a34a; font-weight: 800; }
+.summary-minus { color: #dc2626; font-weight: 800; }
+.summary-zero { color: #94a3b8; font-weight: 800; }
+.summary-empty { text-align: center; color: #94a3b8; font-size: 13px; padding: 12px 0; }
 .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .history-title { font-size: 18px; font-weight: 800; color: #166534; }
 .history-empty { text-align: center; color: #94a3b8; font-size: 14px; padding: 32px 0; }
@@ -227,6 +240,22 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
       <h2 class="history-title">📋 保存記録</h2>
       <button class="back-btn" onclick="closeHistory()">← 戻る</button>
     </div>
+
+    <!-- Summary section -->
+    <div class="summary-section">
+      <div class="summary-title">📊 収支集計</div>
+      <div class="summary-controls">
+        <select class="summary-select" id="summary-period" onchange="renderSummary()">
+          <option value="all">全期間</option>
+        </select>
+        <select class="summary-select" id="summary-member" onchange="renderSummary()">
+          <option value="all">全員</option>
+        </select>
+      </div>
+      <div id="summary-result"></div>
+    </div>
+
+    <div class="summary-title" style="margin-top:20px">📝 記録一覧</div>
     <div id="history-list"></div>
   </div>
 </div>
@@ -387,8 +416,62 @@ function saveRecord(){
   const recs=loadRecords();const idx=recs.findIndex(r=>r.id===rec.id);if(idx>=0)recs[idx]=rec;else recs.unshift(rec);saveRecords(recs);currentRecordId=rec.id;
   const msg=document.getElementById("save-msg");msg.textContent="✅ 保存しました";msg.classList.remove("hidden");setTimeout(()=>msg.classList.add("hidden"),2500);
 }
-function showHistory(){document.getElementById("setup-screen").classList.add("hidden");document.getElementById("history-screen").classList.remove("hidden");renderHistory();}
+function showHistory(){document.getElementById("setup-screen").classList.add("hidden");document.getElementById("history-screen").classList.remove("hidden");populateSummaryDropdowns();renderSummary();renderHistory();}
 function closeHistory(){document.getElementById("history-screen").classList.add("hidden");document.getElementById("setup-screen").classList.remove("hidden");updateHistoryBtn();}
+
+function populateSummaryDropdowns(){
+  const recs=loadRecords(),members=loadMembers();
+  // Period dropdown
+  const periodSel=document.getElementById("summary-period");
+  const years=new Set(),months=new Set();
+  recs.forEach(r=>{if(r.date){const y=r.date.substring(0,4);const ym=r.date.substring(0,7);years.add(y);months.add(ym);}});
+  const sortedYears=[...years].sort().reverse();
+  const sortedMonths=[...months].sort().reverse();
+  let pHtml='<option value="all">全期間</option>';
+  sortedYears.forEach(y=>{pHtml+=`<option value="y:${y}">${y}年</option>`;});
+  sortedMonths.forEach(ym=>{const parts=ym.split("-");pHtml+=`<option value="m:${ym}">${parts[0]}年${parseInt(parts[1])}月</option>`;});
+  periodSel.innerHTML=pHtml;
+  // Member dropdown
+  const memberSel=document.getElementById("summary-member");
+  let mHtml='<option value="all">全員</option>';
+  // Collect all names from records too
+  const allNames=new Set(members);
+  recs.forEach(r=>{r.names.forEach(n=>allNames.add(n));});
+  [...allNames].sort().forEach(n=>{mHtml+=`<option value="${n}">${n}</option>`;});
+  memberSel.innerHTML=mHtml;
+}
+
+function renderSummary(){
+  const recs=loadRecords(),box=document.getElementById("summary-result");
+  const periodVal=document.getElementById("summary-period").value;
+  const memberVal=document.getElementById("summary-member").value;
+  // Filter records by period
+  let filtered=recs;
+  if(periodVal.startsWith("y:")){const y=periodVal.substring(2);filtered=recs.filter(r=>r.date&&r.date.startsWith(y));}
+  else if(periodVal.startsWith("m:")){const ym=periodVal.substring(2);filtered=recs.filter(r=>r.date&&r.date.startsWith(ym));}
+  if(!filtered.length){box.innerHTML='<div class="summary-empty">該当する記録がありません</div>';return;}
+  if(memberVal==="all"){
+    // Show all members summary
+    const totals={};
+    filtered.forEach(r=>{r.names.forEach((n,i)=>{if(!totals[n])totals[n]={money:0,count:0};totals[n].money+=r.money[i];totals[n].count++;});});
+    const sorted=Object.entries(totals).sort((a,b)=>b[1].money-a[1].money);
+    let html='<table class="summary-table"><thead><tr><th>名前</th><th>参加数</th><th>収支合計</th></tr></thead><tbody>';
+    sorted.forEach(([name,d])=>{const cls=d.money>0?"summary-plus":d.money<0?"summary-minus":"summary-zero";html+=`<tr><td>${name}</td><td>${d.count}回</td><td class="${cls}">${formatMoney(d.money)}</td></tr>`;});
+    html+='</tbody></table>';
+    box.innerHTML=html;
+  } else {
+    // Show individual member detail
+    const name=memberVal;
+    let totalMoney=0,count=0;
+    let html='<table class="summary-table"><thead><tr><th>日付</th><th>ゴルフ場</th><th>収支</th></tr></thead><tbody>';
+    filtered.forEach(r=>{const idx=r.names.indexOf(name);if(idx>=0){const m=r.money[idx];totalMoney+=m;count++;const cls=m>0?"summary-plus":m<0?"summary-minus":"summary-zero";html+=`<tr><td>${(r.date||"").replace(/-/g,"/")}</td><td>${r.course||"—"}</td><td class="${cls}">${formatMoney(m)}</td></tr>`;}});
+    if(count===0){box.innerHTML='<div class="summary-empty">該当する記録がありません</div>';return;}
+    const totalCls=totalMoney>0?"summary-plus":totalMoney<0?"summary-minus":"summary-zero";
+    html+=`<tr style="background:#f0fdf4;font-weight:800"><td colspan="2">合計（${count}回）</td><td class="${totalCls}">${formatMoney(totalMoney)}</td></tr>`;
+    html+='</tbody></table>';
+    box.innerHTML=html;
+  }
+}
 function renderHistory(){
   const recs=loadRecords(),box=document.getElementById("history-list");
   if(!recs.length){box.innerHTML='<div class="history-empty">保存された記録はありません</div>';return;}
