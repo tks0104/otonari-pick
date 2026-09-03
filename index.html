@@ -456,8 +456,8 @@ function renderSummary(){
     const totals={};
     filtered.forEach(r=>{r.names.forEach((n,i)=>{if(!totals[n])totals[n]={money:0,count:0};totals[n].money+=r.money[i];totals[n].count++;});});
     const sorted=Object.entries(totals).sort((a,b)=>b[1].money-a[1].money);
-    let html='<table class="summary-table"><thead><tr><th>名前</th><th>参加数</th><th>収支合計</th></tr></thead><tbody>';
-    sorted.forEach(([name,d])=>{const cls=d.money>0?"summary-plus":d.money<0?"summary-minus":"summary-zero";html+=`<tr><td>${name}</td><td>${d.count}回</td><td class="${cls}">${formatMoney(d.money)}</td></tr>`;});
+    let html='<table class="summary-table"><thead><tr><th>RANK</th><th>名前</th><th>参加数</th><th>収支合計</th></tr></thead><tbody>';
+    sorted.forEach(([name,d],idx)=>{const cls=d.money>0?"summary-plus":d.money<0?"summary-minus":"summary-zero";const rank=idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":(idx+1)+"位";html+=`<tr><td style="font-size:${idx<3?'20px':'13px'}">${rank}</td><td>${name}</td><td>${d.count}回</td><td class="${cls}">${formatMoney(d.money)}</td></tr>`;});
     html+='</tbody></table>';
     box.innerHTML=html;
   } else {
