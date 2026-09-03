@@ -88,10 +88,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .bonus-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
 .bonus-btn { display: flex; align-items: center; justify-content: center; padding: 8px 2px; border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer; transition: all 0.15s; font-size: 13px; font-weight: 600; color: #64748b; }
 .bonus-btn.selected { border-color: #7c3aed; background: #7c3aed15; color: #7c3aed; transform: scale(1.08); font-weight: 800; }
+.minus-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.minus-btn { display: flex; align-items: center; justify-content: center; padding: 7px 1px; border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer; transition: all 0.15s; font-size: 12px; font-weight: 600; color: #64748b; }
+.minus-btn.selected { border-color: #dc2626; background: #dc262615; color: #dc2626; transform: scale(1.08); font-weight: 800; }
 .player-total-line { font-size: 12px; color: #475569; font-weight: 700; margin-top: 6px; text-align: right; }
 .next-hole-btn { width: 100%; padding: 12px 0; background: #16a34a; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px; }
 
-/* Error toast */
 .error-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #dc2626; color: #fff; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 9999; box-shadow: 0 4px 12px rgba(220,38,38,0.3); animation: toastIn 0.3s ease; max-width: 90%; text-align: center; }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
@@ -118,6 +120,7 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
 .medal-cell { font-size: 12px; white-space: nowrap; }
 .medal-cell .pts { font-size: 11px; color: #64748b; }
 .medal-cell .bonus-tag { font-size: 10px; color: #7c3aed; font-weight: 700; }
+.medal-cell .minus-tag { font-size: 10px; color: #dc2626; font-weight: 700; }
 
 .history-card { background: #fff; border-radius: 16px; padding: 24px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -201,208 +204,159 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
 
 <script>
 const MEDALS_4 = [
-  { key: "none", label: "—", emoji: "", points: 0, color: "transparent" },
-  { key: "iron", label: "鉄", emoji: "⚙️", points: 1, color: "#78716c" },
-  { key: "bronze", label: "銅", emoji: "🥉", points: 2, color: "#b45309" },
-  { key: "silver", label: "銀", emoji: "🥈", points: 3, color: "#94a3b8" },
-  { key: "gold", label: "金", emoji: "🥇", points: 4, color: "#ca8a04" },
-  { key: "diamond", label: "ダイヤ", emoji: "💎", points: 8, color: "#2563eb" },
+  { key:"none", label:"—", emoji:"", points:0, color:"transparent" },
+  { key:"iron", label:"鉄", emoji:"⚙️", points:1, color:"#78716c" },
+  { key:"bronze", label:"銅", emoji:"🥉", points:2, color:"#b45309" },
+  { key:"silver", label:"銀", emoji:"🥈", points:3, color:"#94a3b8" },
+  { key:"gold", label:"金", emoji:"🥇", points:4, color:"#ca8a04" },
+  { key:"diamond", label:"ダイヤ", emoji:"💎", points:8, color:"#2563eb" },
 ];
 const MEDALS_3 = [
-  { key: "none", label: "—", emoji: "", points: 0, color: "transparent" },
-  { key: "bronze", label: "銅", emoji: "🥉", points: 1, color: "#b45309" },
-  { key: "silver", label: "銀", emoji: "🥈", points: 2, color: "#94a3b8" },
-  { key: "gold", label: "金", emoji: "🥇", points: 3, color: "#ca8a04" },
-  { key: "diamond", label: "ダイヤ", emoji: "💎", points: 6, color: "#2563eb" },
+  { key:"none", label:"—", emoji:"", points:0, color:"transparent" },
+  { key:"bronze", label:"銅", emoji:"🥉", points:1, color:"#b45309" },
+  { key:"silver", label:"銀", emoji:"🥈", points:2, color:"#94a3b8" },
+  { key:"gold", label:"金", emoji:"🥇", points:3, color:"#ca8a04" },
+  { key:"diamond", label:"ダイヤ", emoji:"💎", points:6, color:"#2563eb" },
 ];
-// Keys that must NOT be duplicated on the same hole
-const UNIQUE_MEDALS = ["iron", "bronze", "silver", "gold"];
 const BONUS_OPTIONS = [0,1,2,3,4,5,6,7,8,9,10];
+const MINUS_OPTIONS = [0,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12];
 
-let playerCount = 4, names = ["A","B","C","D"], scores = {}, bonuses = {}, multipliers = {};
-let activeHole = 1, rate = 100, gameDate = "", courseName = "", currentRecordId = null;
+let playerCount=4, names=["A","B","C","D"], scores={}, bonuses={}, minuses={}, multipliers={};
+let activeHole=1, rate=100, gameDate="", courseName="", currentRecordId=null;
 const STORAGE_KEY = "golf_olympic_records";
 
-function getMedals() { return playerCount === 3 ? MEDALS_3 : MEDALS_4; }
+function getMedals() { return playerCount===3?MEDALS_3:MEDALS_4; }
 function initScores() {
-  scores = {}; bonuses = {}; multipliers = {};
-  for (let h = 1; h <= 18; h++) { scores[h] = {}; bonuses[h] = {}; multipliers[h] = 1; for (let p = 0; p < playerCount; p++) { scores[h][p] = "none"; bonuses[h][p] = 0; } }
+  scores={}; bonuses={}; minuses={}; multipliers={};
+  for(let h=1;h<=18;h++){scores[h]={};bonuses[h]={};minuses[h]={};multipliers[h]=1;for(let p=0;p<playerCount;p++){scores[h][p]="none";bonuses[h][p]=0;minuses[h][p]=0;}}
 }
-function findMedal(key) { return getMedals().find(m => m.key === key) || getMedals()[0]; }
-function holePoints(h, p) { return findMedal(scores[h]?.[p]).points * (multipliers[h]||1) + (bonuses[h]?.[p]||0); }
-function calcTotals(from, to) { const t = Array(playerCount).fill(0); for (let h = from; h <= to; h++) for (let p = 0; p < playerCount; p++) t[p] += holePoints(h, p); return t; }
-function calcMoney(totals) { const a = totals.reduce((s,v) => s+v, 0); return totals.map(o => (o*playerCount - a)*rate); }
-function formatMoney(v) { return (v>0?"+":"") + "¥" + v.toLocaleString(); }
-function todayStr() { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-function loadRecords() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; } catch(e) { return []; } }
-function saveRecords(r) { localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
-function updateHistoryBtn() { document.getElementById("history-open-btn").style.display = loadRecords().length > 0 ? "block" : "none"; }
+function findMedal(key){return getMedals().find(m=>m.key===key)||getMedals()[0];}
+function holePoints(h,p){return findMedal(scores[h]?.[p]).points*(multipliers[h]||1)+(bonuses[h]?.[p]||0)+(minuses[h]?.[p]||0);}
+function calcTotals(from,to){const t=Array(playerCount).fill(0);for(let h=from;h<=to;h++)for(let p=0;p<playerCount;p++)t[p]+=holePoints(h,p);return t;}
+function calcMoney(totals){const a=totals.reduce((s,v)=>s+v,0);return totals.map(o=>(o*playerCount-a)*rate);}
+function formatMoney(v){return(v>0?"+":"")+"¥"+v.toLocaleString();}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function loadRecords(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch(e){return[];}}
+function saveRecords(r){localStorage.setItem(STORAGE_KEY,JSON.stringify(r));}
+function updateHistoryBtn(){document.getElementById("history-open-btn").style.display=loadRecords().length>0?"block":"none";}
 
-// Error toast
-function showError(msg) {
-  const el = document.createElement("div");
-  el.className = "error-toast";
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => { el.remove(); }, 2500);
-}
+function showError(msg){const el=document.createElement("div");el.className="error-toast";el.textContent=msg;document.body.appendChild(el);setTimeout(()=>{el.remove();},2500);}
 
-// Check if medal is already taken by another player on same hole
-function checkDuplicate(hole, player, key) {
-  if (key === "none" || key === "diamond") return false;
-  // If someone has diamond, block lowest medal (iron for 4p, bronze for 3p)
-  const lowestKey = playerCount === 4 ? "iron" : "bronze";
-  if (key === lowestKey) {
-    for (let p = 0; p < playerCount; p++) {
-      if (scores[hole][p] === "diamond") {
-        const lowestLabel = findMedal(lowestKey).label;
-        showError("⚠️ ダイヤ取得者がいるため " + lowestLabel + " は選択できません");
-        return true;
-      }
-    }
-  }
-  for (let p = 0; p < playerCount; p++) {
-    if (p !== player && scores[hole][p] === key) {
-      const medalLabel = findMedal(key).label;
-      const takerName = names[p];
-      showError("⚠️ " + medalLabel + " は " + takerName + " が既に取得しています");
-      return true;
-    }
-  }
+function checkDuplicate(hole,player,key){
+  if(key==="none"||key==="diamond")return false;
+  const lowestKey=playerCount===4?"iron":"bronze";
+  if(key===lowestKey){for(let p=0;p<playerCount;p++){if(scores[hole][p]==="diamond"){showError("⚠️ ダイヤ取得者がいるため "+findMedal(lowestKey).label+" は選択できません");return true;}}}
+  for(let p=0;p<playerCount;p++){if(p!==player&&scores[hole][p]===key){showError("⚠️ "+findMedal(key).label+" は "+names[p]+" が既に取得しています");return true;}}
   return false;
 }
 
-function setPlayerCount(n) {
-  playerCount = n;
-  document.getElementById("btn-3p").className = "toggle-btn" + (n===3?" active":"");
-  document.getElementById("btn-4p").className = "toggle-btn" + (n===4?" active":"");
-  renderNameInputs(); renderPointsRef();
-}
-function renderNameInputs() {
-  const box = document.getElementById("name-inputs"); box.innerHTML = "";
-  for (let i = 0; i < playerCount; i++) { const inp = document.createElement("input"); inp.className = "name-input"; inp.value = names[i]||""; inp.placeholder = "プレイヤー "+(i+1); inp.oninput = function(){ names[i]=this.value; }; box.appendChild(inp); }
-}
-function renderPointsRef() {
-  const box = document.getElementById("points-ref");
-  let html = getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");
-  html += `<div class="point-chip"><span>🏅</span><span class="pt-label">追加</span><span class="pt-val">1〜10pt</span></div>`;
-  box.innerHTML = html;
-}
-function changeRate(val) { rate=Number(val); document.getElementById("rate-setup").value=rate; document.getElementById("rate-game").value=rate; renderAll(); }
+function setPlayerCount(n){playerCount=n;document.getElementById("btn-3p").className="toggle-btn"+(n===3?" active":"");document.getElementById("btn-4p").className="toggle-btn"+(n===4?" active":"");renderNameInputs();renderPointsRef();}
+function renderNameInputs(){const box=document.getElementById("name-inputs");box.innerHTML="";for(let i=0;i<playerCount;i++){const inp=document.createElement("input");inp.className="name-input";inp.value=names[i]||"";inp.placeholder="プレイヤー "+(i+1);inp.oninput=function(){names[i]=this.value;};box.appendChild(inp);}}
+function renderPointsRef(){const box=document.getElementById("points-ref");let html=getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");html+=`<div class="point-chip"><span>🏅</span><span class="pt-label">追加</span><span class="pt-val">1〜10</span></div>`;html+=`<div class="point-chip"><span>📉</span><span class="pt-label">マイナス</span><span class="pt-val">-1〜-12</span></div>`;box.innerHTML=html;}
+function changeRate(val){rate=Number(val);document.getElementById("rate-setup").value=rate;document.getElementById("rate-game").value=rate;renderAll();}
 
-function startGame() {
-  document.querySelectorAll("#name-inputs .name-input").forEach((inp,i)=>{ names[i]=inp.value||("P"+(i+1)); });
-  gameDate = document.getElementById("input-date").value||todayStr();
-  courseName = document.getElementById("input-course").value||"";
-  initScores(); activeHole=1; currentRecordId=null;
-  document.getElementById("rate-game").value=rate;
-  document.getElementById("setup-screen").classList.add("hidden");
-  document.getElementById("history-screen").classList.add("hidden");
-  document.getElementById("game-screen").classList.remove("hidden");
-  document.getElementById("save-msg").classList.add("hidden");
-  renderAll();
+function startGame(){
+  document.querySelectorAll("#name-inputs .name-input").forEach((inp,i)=>{names[i]=inp.value||("P"+(i+1));});
+  gameDate=document.getElementById("input-date").value||todayStr();courseName=document.getElementById("input-course").value||"";
+  initScores();activeHole=1;currentRecordId=null;document.getElementById("rate-game").value=rate;
+  document.getElementById("setup-screen").classList.add("hidden");document.getElementById("history-screen").classList.add("hidden");
+  document.getElementById("game-screen").classList.remove("hidden");document.getElementById("save-msg").classList.add("hidden");renderAll();
 }
-function backToSetup() {
-  document.getElementById("game-screen").classList.add("hidden");
-  document.getElementById("setup-screen").classList.remove("hidden");
-  updateHistoryBtn();
-}
-function renderAll() { renderGameInfo(); renderScoreboard(); renderMoneyBar(); renderHoleSelector(); renderHoleCard(); renderTable(); }
+function backToSetup(){document.getElementById("game-screen").classList.add("hidden");document.getElementById("setup-screen").classList.remove("hidden");updateHistoryBtn();}
+function renderAll(){renderGameInfo();renderScoreboard();renderMoneyBar();renderHoleSelector();renderHoleCard();renderTable();}
 
-function renderGameInfo() {
-  const box = document.getElementById("game-info"); const dd = gameDate?gameDate.replace(/-/g,"/"):""; const parts = [];
-  if (dd) parts.push(`<span class="gi-text">📅 ${dd}</span>`);
-  if (courseName) parts.push(`<span class="gi-text">🏌️ ${courseName}</span>`);
-  box.innerHTML = parts.join('<span style="color:#e2e8f0;margin:0 4px">|</span>'); box.style.display = parts.length?"flex":"none";
-}
-function renderScoreboard() {
-  const totals=calcTotals(1,18), front=calcTotals(1,9), back=calcTotals(10,18), max=Math.max(...totals), box=document.getElementById("scoreboard"); box.innerHTML="";
-  for (let i=0;i<playerCount;i++) { const ld=totals[i]===max&&max>0; box.innerHTML+=`<div class="score-card${ld?" leading":""}"><div class="sc-name">${ld?"👑 ":""}${names[i]}</div><div class="sc-total">${totals[i]}</div><div class="sc-sub">前半 ${front[i]} / 後半 ${back[i]}</div></div>`; }
-}
-function renderMoneyBar() {
-  const totals=calcTotals(1,18), money=calcMoney(totals), box=document.getElementById("money-bar"); box.innerHTML="";
-  for (let i=0;i<playerCount;i++) { const c=money[i]>0?"plus":money[i]<0?"minus":"zero"; box.innerHTML+=`<div class="money-card"><div class="money-name">${names[i]}</div><div class="money-amount ${c}">${formatMoney(money[i])}</div></div>`; }
-}
-function renderHoleSelector() {
-  const box=document.getElementById("hole-selector"); box.innerHTML="";
-  for (let h=1;h<=18;h++) { const has=Array.from({length:playerCount}).some((_,p)=>(scores[h]?.[p]&&scores[h][p]!=="none")||(bonuses[h]?.[p]>0)); let c="hole-btn"; if(h===activeHole)c+=" active"; else if(has)c+=" filled"; box.innerHTML+=`<button class="${c}" onclick="goHole(${h})">${h}</button>`; }
-}
-function goHole(h) { activeHole=h; renderAll(); }
+function renderGameInfo(){const box=document.getElementById("game-info");const dd=gameDate?gameDate.replace(/-/g,"/"):"";const parts=[];if(dd)parts.push(`<span class="gi-text">📅 ${dd}</span>`);if(courseName)parts.push(`<span class="gi-text">🏌️ ${courseName}</span>`);box.innerHTML=parts.join('<span style="color:#e2e8f0;margin:0 4px">|</span>');box.style.display=parts.length?"flex":"none";}
 
-function renderHoleCard() {
-  const medals=getMedals(), box=document.getElementById("hole-card"), mul=multipliers[activeHole]||1;
-  let mulOpts=""; for(let i=1;i<=10;i++) mulOpts+=`<option value="${i}"${mul===i?" selected":""}>${i}倍</option>`;
+function renderScoreboard(){
+  const totals=calcTotals(1,18),front=calcTotals(1,9),back=calcTotals(10,18),max=Math.max(...totals),box=document.getElementById("scoreboard");box.innerHTML="";
+  for(let i=0;i<playerCount;i++){const ld=totals[i]===max&&max>0;box.innerHTML+=`<div class="score-card${ld?" leading":""}"><div class="sc-name">${ld?"👑 ":""}${names[i]}</div><div class="sc-total">${totals[i]}</div><div class="sc-sub">前半 ${front[i]} / 後半 ${back[i]}</div></div>`;}
+}
+function renderMoneyBar(){
+  const totals=calcTotals(1,18),money=calcMoney(totals),box=document.getElementById("money-bar");box.innerHTML="";
+  for(let i=0;i<playerCount;i++){const c=money[i]>0?"plus":money[i]<0?"minus":"zero";box.innerHTML+=`<div class="money-card"><div class="money-name">${names[i]}</div><div class="money-amount ${c}">${formatMoney(money[i])}</div></div>`;}
+}
+function renderHoleSelector(){
+  const box=document.getElementById("hole-selector");box.innerHTML="";
+  for(let h=1;h<=18;h++){const has=Array.from({length:playerCount}).some((_,p)=>(scores[h]?.[p]&&scores[h][p]!=="none")||(bonuses[h]?.[p]>0)||(minuses[h]?.[p]<0));let c="hole-btn";if(h===activeHole)c+=" active";else if(has)c+=" filled";box.innerHTML+=`<button class="${c}" onclick="goHole(${h})">${h}</button>`;}
+}
+function goHole(h){activeHole=h;renderAll();}
+
+function renderHoleCard(){
+  const medals=getMedals(),box=document.getElementById("hole-card"),mul=multipliers[activeHole]||1;
+  let mulOpts="";for(let i=1;i<=10;i++)mulOpts+=`<option value="${i}"${mul===i?" selected":""}>${i}倍</option>`;
   let html=`<div class="hole-card-header"><button class="hole-nav" onclick="goHole(${Math.max(1,activeHole-1)})" ${activeHole===1?"disabled":""}>◀</button><h3 class="hole-number">Hole ${activeHole}</h3><button class="hole-nav" onclick="goHole(${Math.min(18,activeHole+1)})" ${activeHole===18?"disabled":""}>▶</button></div>
     <div class="multiplier-area"><span class="multiplier-label">倍率（メダルのみ適用）</span><select class="multiplier-select" onchange="setMultiplier(${activeHole},Number(this.value))">${mulOpts}</select></div>`;
 
-  for (let p=0;p<playerCount;p++) {
-    const cm=scores[activeHole]?.[p]||"none", cb=bonuses[activeHole]?.[p]||0, mp=findMedal(cm).points, tp=mp*mul+cb;
+  for(let p=0;p<playerCount;p++){
+    const cm=scores[activeHole]?.[p]||"none",cb=bonuses[activeHole]?.[p]||0,cmn=minuses[activeHole]?.[p]||0;
+    const mp=findMedal(cm).points,tp=mp*mul+cb+cmn;
     html+=`<div class="player-row"><div class="player-label">${names[p]}</div>`;
+    // Medal row
     html+=`<div class="medal-section-label">メダル${mul>1?` <span class="multiplier-badge">×${mul}</span>`:""}</div><div class="medal-row">`;
-    for(const m of medals){ const sel=cm===m.key; let st=""; if(sel&&m.key!=="none")st=`background:${m.color}22;border-color:${m.color};`; else if(sel)st="background:#f1f5f9;border-color:#cbd5e1;";
-      html+=`<button class="medal-btn${sel?" selected":""}" style="${st}" onclick="selectMedal(${activeHole},${p},'${m.key}')"><span class="m-emoji" style="font-size:${m.key==="none"?14:18}px">${m.key==="none"?"—":m.emoji}</span><span class="m-label">${m.key==="none"?"なし":m.label}</span></button>`; }
+    for(const m of medals){const sel=cm===m.key;let st="";if(sel&&m.key!=="none")st=`background:${m.color}22;border-color:${m.color};`;else if(sel)st="background:#f1f5f9;border-color:#cbd5e1;";
+      html+=`<button class="medal-btn${sel?" selected":""}" style="${st}" onclick="selectMedal(${activeHole},${p},'${m.key}')"><span class="m-emoji" style="font-size:${m.key==="none"?14:18}px">${m.key==="none"?"—":m.emoji}</span><span class="m-label">${m.key==="none"?"なし":m.label}</span></button>`;}
     html+=`</div>`;
+    // Bonus row
     html+=`<div class="medal-section-label">追加メダル 🏅（倍率対象外）</div><div class="bonus-row">`;
-    for(const b of BONUS_OPTIONS){ const sel=cb===b; html+=`<button class="bonus-btn${sel?" selected":""}" onclick="selectBonus(${activeHole},${p},${b})">${b===0?"—":b}</button>`; }
+    for(const b of BONUS_OPTIONS){const sel=cb===b;html+=`<button class="bonus-btn${sel?" selected":""}" onclick="selectBonus(${activeHole},${p},${b})">${b===0?"—":b}</button>`;}
     html+=`</div>`;
-    if(tp>0){ let det=""; if(mp>0&&mul>1)det=`（メダル ${mp}×${mul}=${mp*mul}${cb>0?` + 追加${cb}`:""}`+`）`; html+=`<div class="player-total-line">このホール: +${tp}pt ${det}</div>`; }
+    // Minus row
+    html+=`<div class="medal-section-label">マイナス 📉（倍率対象外）</div><div class="minus-row">`;
+    for(const mn of MINUS_OPTIONS){const sel=cmn===mn;html+=`<button class="minus-btn${sel?" selected":""}" onclick="selectMinus(${activeHole},${p},${mn})">${mn===0?"—":mn}</button>`;}
+    html+=`</div>`;
+    // Total
+    if(tp!==0){html+=`<div class="player-total-line" style="color:${tp<0?"#dc2626":"#475569"}">このホール: ${tp>0?"+":""}${tp}pt</div>`;}
     html+=`</div>`;
   }
-  if(activeHole<18) html+=`<button class="next-hole-btn" onclick="goHole(${activeHole+1})">次のホールへ →</button>`;
+  if(activeHole<18)html+=`<button class="next-hole-btn" onclick="goHole(${activeHole+1})">次のホールへ →</button>`;
   box.innerHTML=html;
 }
 
-function selectMedal(hole, player, key) {
-  if (checkDuplicate(hole, player, key)) return;
-  scores[hole][player] = key;
-  renderAll();
-}
-function selectBonus(hole, player, val) { bonuses[hole][player]=val; renderAll(); }
-function setMultiplier(hole, val) { multipliers[hole]=val; renderAll(); }
+function selectMedal(hole,player,key){if(checkDuplicate(hole,player,key))return;scores[hole][player]=key;renderAll();}
+function selectBonus(hole,player,val){bonuses[hole][player]=val;renderAll();}
+function selectMinus(hole,player,val){minuses[hole][player]=val;renderAll();}
+function setMultiplier(hole,val){multipliers[hole]=val;renderAll();}
 
-function renderTable() {
-  const totals=calcTotals(1,18), front=calcTotals(1,9), back=calcTotals(10,18), money=calcMoney(totals), max=Math.max(...totals);
-  let html=`<thead><tr><th class="th-hole">H</th>`; for(let p=0;p<playerCount;p++)html+=`<th>${names[p]}</th>`; html+=`</tr></thead><tbody>`;
-  for(let h=1;h<=18;h++){ const mul=multipliers[h]||1, mt=mul>1?`<span class="multiplier-badge">×${mul}</span>`:"";
+function renderTable(){
+  const totals=calcTotals(1,18),front=calcTotals(1,9),back=calcTotals(10,18),money=calcMoney(totals),max=Math.max(...totals);
+  let html=`<thead><tr><th class="th-hole">H</th>`;for(let p=0;p<playerCount;p++)html+=`<th>${names[p]}</th>`;html+=`</tr></thead><tbody>`;
+  for(let h=1;h<=18;h++){const mul=multipliers[h]||1,mt=mul>1?`<span class="multiplier-badge">×${mul}</span>`:"";
     html+=`<tr class="${h===activeHole?"highlight":""}" onclick="goHole(${h})" style="cursor:pointer"><td class="td-hole">${h}${mt}</td>`;
-    for(let p=0;p<playerCount;p++){ const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0; let c=""; if(m.key!=="none")c+=m.emoji; if(b>0)c+=(c?" ":"")+`<span class="bonus-tag">🏅${b}</span>`; const t=m.points*mul+b; if(t>0)c+=` <span class="pts">+${t}</span>`; html+=`<td class="medal-cell">${c}</td>`; }
-    html+=`</tr>`; }
-  html+=`<tr class="front-back"><td class="td-hole">前半</td>`; for(let p=0;p<playerCount;p++)html+=`<td>${front[p]}</td>`; html+=`</tr>`;
-  html+=`<tr class="front-back"><td class="td-hole">後半</td>`; for(let p=0;p<playerCount;p++)html+=`<td>${back[p]}</td>`; html+=`</tr>`;
-  html+=`<tr class="total-row"><td class="td-hole">合計</td>`; for(let p=0;p<playerCount;p++){const ld=totals[p]===max&&max>0; html+=`<td${ld?' class="leading"':""}>${totals[p]}</td>`;} html+=`</tr>`;
-  html+=`<tr class="money-row"><td class="td-hole" style="font-size:11px">収支</td>`; for(let p=0;p<playerCount;p++){const c=money[p]>0?"money-plus":money[p]<0?"money-minus":"money-zero"; html+=`<td class="${c}">${formatMoney(money[p])}</td>`;} html+=`</tr></tbody>`;
+    for(let p=0;p<playerCount;p++){const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0,mn=minuses[h]?.[p]||0;let c="";if(m.key!=="none")c+=m.emoji;if(b>0)c+=(c?" ":"")+`<span class="bonus-tag">🏅${b}</span>`;if(mn<0)c+=(c?" ":"")+`<span class="minus-tag">📉${mn}</span>`;const t=m.points*mul+b+mn;if(t!==0)c+=` <span class="pts" style="${t<0?"color:#dc2626":""}">${t>0?"+":""}${t}</span>`;html+=`<td class="medal-cell">${c}</td>`;}
+    html+=`</tr>`;}
+  html+=`<tr class="front-back"><td class="td-hole">前半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${front[p]}</td>`;html+=`</tr>`;
+  html+=`<tr class="front-back"><td class="td-hole">後半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${back[p]}</td>`;html+=`</tr>`;
+  html+=`<tr class="total-row"><td class="td-hole">合計</td>`;for(let p=0;p<playerCount;p++){const ld=totals[p]===max&&max>0;html+=`<td${ld?' class="leading"':""}>${totals[p]}</td>`;}html+=`</tr>`;
+  html+=`<tr class="money-row"><td class="td-hole" style="font-size:11px">収支</td>`;for(let p=0;p<playerCount;p++){const c=money[p]>0?"money-plus":money[p]<0?"money-minus":"money-zero";html+=`<td class="${c}">${formatMoney(money[p])}</td>`;}html+=`</tr></tbody>`;
   document.getElementById("detail-table").innerHTML=html;
 }
 
-function saveRecord() {
-  const totals=calcTotals(1,18), money=calcMoney(totals);
-  const rec={id:currentRecordId||Date.now(),date:gameDate,course:courseName,playerCount,names:names.slice(0,playerCount),scores:JSON.parse(JSON.stringify(scores)),bonuses:JSON.parse(JSON.stringify(bonuses)),multipliers:JSON.parse(JSON.stringify(multipliers)),rate,totals,money};
-  const recs=loadRecords(); const idx=recs.findIndex(r=>r.id===rec.id); if(idx>=0)recs[idx]=rec; else recs.unshift(rec); saveRecords(recs); currentRecordId=rec.id;
-  const msg=document.getElementById("save-msg"); msg.textContent="✅ 保存しました"; msg.classList.remove("hidden"); setTimeout(()=>msg.classList.add("hidden"),2500);
+function saveRecord(){
+  const totals=calcTotals(1,18),money=calcMoney(totals);
+  const rec={id:currentRecordId||Date.now(),date:gameDate,course:courseName,playerCount,names:names.slice(0,playerCount),scores:JSON.parse(JSON.stringify(scores)),bonuses:JSON.parse(JSON.stringify(bonuses)),minuses:JSON.parse(JSON.stringify(minuses)),multipliers:JSON.parse(JSON.stringify(multipliers)),rate,totals,money};
+  const recs=loadRecords();const idx=recs.findIndex(r=>r.id===rec.id);if(idx>=0)recs[idx]=rec;else recs.unshift(rec);saveRecords(recs);currentRecordId=rec.id;
+  const msg=document.getElementById("save-msg");msg.textContent="✅ 保存しました";msg.classList.remove("hidden");setTimeout(()=>msg.classList.add("hidden"),2500);
 }
-function showHistory(){ document.getElementById("setup-screen").classList.add("hidden"); document.getElementById("history-screen").classList.remove("hidden"); renderHistory(); }
-function closeHistory(){ document.getElementById("history-screen").classList.add("hidden"); document.getElementById("setup-screen").classList.remove("hidden"); updateHistoryBtn(); }
+function showHistory(){document.getElementById("setup-screen").classList.add("hidden");document.getElementById("history-screen").classList.remove("hidden");renderHistory();}
+function closeHistory(){document.getElementById("history-screen").classList.add("hidden");document.getElementById("setup-screen").classList.remove("hidden");updateHistoryBtn();}
 function renderHistory(){
-  const recs=loadRecords(), box=document.getElementById("history-list");
+  const recs=loadRecords(),box=document.getElementById("history-list");
   if(!recs.length){box.innerHTML='<div class="history-empty">保存された記録はありません</div>';return;}
-  box.innerHTML=recs.map(r=>{
-    const res=r.names.map((n,i)=>{const v=r.money[i],c=v>0?"plus":v<0?"minus":"zero";return`<span class="hi-result ${c}">${n}: ${formatMoney(v)}</span>`;}).join("");
-    return`<div class="history-item" onclick="loadRecord(${r.id})"><div class="hi-top"><span class="hi-date">${(r.date||"").replace(/-/g,"/")}</span><span class="hi-course">${r.course||"—"}</span></div><div class="hi-players">${r.names.join(", ")}（${r.playerCount}人 / ¥${r.rate}）</div><div class="hi-results">${res}</div><div class="hi-actions"><button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})">🗑 削除</button></div></div>`;
-  }).join("");
+  box.innerHTML=recs.map(r=>{const res=r.names.map((n,i)=>{const v=r.money[i],c=v>0?"plus":v<0?"minus":"zero";return`<span class="hi-result ${c}">${n}: ${formatMoney(v)}</span>`;}).join("");
+    return`<div class="history-item" onclick="loadRecord(${r.id})"><div class="hi-top"><span class="hi-date">${(r.date||"").replace(/-/g,"/")}</span><span class="hi-course">${r.course||"—"}</span></div><div class="hi-players">${r.names.join(", ")}（${r.playerCount}人 / ¥${r.rate}）</div><div class="hi-results">${res}</div><div class="hi-actions"><button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})">🗑 削除</button></div></div>`;}).join("");
 }
 function loadRecord(id){
-  const r=loadRecords().find(x=>x.id===id); if(!r)return;
-  playerCount=r.playerCount; names=[...r.names]; while(names.length<4)names.push("");
-  scores=JSON.parse(JSON.stringify(r.scores)); bonuses=r.bonuses?JSON.parse(JSON.stringify(r.bonuses)):{}; multipliers=r.multipliers?JSON.parse(JSON.stringify(r.multipliers)):{};
-  for(let h=1;h<=18;h++){if(!bonuses[h]){bonuses[h]={};for(let p=0;p<playerCount;p++)bonuses[h][p]=0;}if(!multipliers[h])multipliers[h]=1;}
-  rate=r.rate; gameDate=r.date||""; courseName=r.course||""; activeHole=1; currentRecordId=r.id;
-  document.getElementById("rate-game").value=rate;
-  document.getElementById("history-screen").classList.add("hidden"); document.getElementById("setup-screen").classList.add("hidden"); document.getElementById("game-screen").classList.remove("hidden"); document.getElementById("save-msg").classList.add("hidden"); renderAll();
+  const r=loadRecords().find(x=>x.id===id);if(!r)return;
+  playerCount=r.playerCount;names=[...r.names];while(names.length<4)names.push("");
+  scores=JSON.parse(JSON.stringify(r.scores));bonuses=r.bonuses?JSON.parse(JSON.stringify(r.bonuses)):{};minuses=r.minuses?JSON.parse(JSON.stringify(r.minuses)):{};multipliers=r.multipliers?JSON.parse(JSON.stringify(r.multipliers)):{};
+  for(let h=1;h<=18;h++){if(!bonuses[h]){bonuses[h]={};for(let p=0;p<playerCount;p++)bonuses[h][p]=0;}if(!minuses[h]){minuses[h]={};for(let p=0;p<playerCount;p++)minuses[h][p]=0;}if(!multipliers[h])multipliers[h]=1;}
+  rate=r.rate;gameDate=r.date||"";courseName=r.course||"";activeHole=1;currentRecordId=r.id;
+  document.getElementById("rate-game").value=rate;document.getElementById("history-screen").classList.add("hidden");document.getElementById("setup-screen").classList.add("hidden");document.getElementById("game-screen").classList.remove("hidden");document.getElementById("save-msg").classList.add("hidden");renderAll();
 }
-function deleteRecord(id){ if(!confirm("この記録を削除しますか？"))return; saveRecords(loadRecords().filter(r=>r.id!==id)); renderHistory(); }
+function deleteRecord(id){if(!confirm("この記録を削除しますか？"))return;saveRecords(loadRecords().filter(r=>r.id!==id));renderHistory();}
 
-document.getElementById("input-date").value=todayStr(); renderNameInputs(); renderPointsRef(); updateHistoryBtn();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+document.getElementById("input-date").value=todayStr();renderNameInputs();renderPointsRef();updateHistoryBtn();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
 </html>
