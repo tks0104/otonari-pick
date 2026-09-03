@@ -263,7 +263,7 @@ function initScores() {
   for(let h=1;h<=18;h++){scores[h]={};bonuses[h]={};minuses[h]={};multipliers[h]=1;for(let p=0;p<playerCount;p++){scores[h][p]="none";bonuses[h][p]=0;minuses[h][p]=0;}}
 }
 function findMedal(key){return getMedals().find(m=>m.key===key)||getMedals()[0];}
-function holePoints(h,p){return findMedal(scores[h]?.[p]).points*(multipliers[h]||1)+(bonuses[h]?.[p]||0)+(minuses[h]?.[p]||0);}
+function holePoints(h,p){const mul=multipliers[h]||1;return findMedal(scores[h]?.[p]).points*mul+(bonuses[h]?.[p]||0)+(minuses[h]?.[p]||0)*mul;}
 function calcTotals(from,to){const t=Array(playerCount).fill(0);for(let h=from;h<=to;h++)for(let p=0;p<playerCount;p++)t[p]+=holePoints(h,p);return t;}
 function calcMoney(totals){const a=totals.reduce((s,v)=>s+v,0);return totals.map(o=>(o*playerCount-a)*rate);}
 function formatMoney(v){return(v>0?"+":"")+"¥"+v.toLocaleString();}
@@ -339,7 +339,7 @@ function renderHoleCard(){
 
   for(let p=0;p<playerCount;p++){
     const cm=scores[activeHole]?.[p]||"none",cb=bonuses[activeHole]?.[p]||0,cmn=minuses[activeHole]?.[p]||0;
-    const mp=findMedal(cm).points,tp=mp*mul+cb+cmn;
+    const mp=findMedal(cm).points,tp=mp*mul+cb+cmn*mul;
     html+=`<div class="player-row"><div class="player-label">${names[p]}</div>`;
     // Medal row
     html+=`<div class="medal-section-label">メダル${mul>1?` <span class="multiplier-badge">×${mul}</span>`:""}</div><div class="medal-row">`;
@@ -351,7 +351,7 @@ function renderHoleCard(){
     for(const b of BONUS_OPTIONS){const sel=cb===b;html+=`<button class="bonus-btn${sel?" selected":""}" onclick="selectBonus(${activeHole},${p},${b})">${b===0?"—":b}</button>`;}
     html+=`</div>`;
     // Minus row
-    html+=`<div class="medal-section-label">マイナス 📉（倍率対象外）</div><div class="minus-row">`;
+    html+=`<div class="medal-section-label">マイナス 📉${mul>1?` <span class="multiplier-badge">×${mul}</span>`:""}</div><div class="minus-row">`;
     for(const mn of MINUS_OPTIONS){const sel=cmn===mn;html+=`<button class="minus-btn${sel?" selected":""}" onclick="selectMinus(${activeHole},${p},${mn})">${mn===0?"—":"▲"+Math.abs(mn)}</button>`;}
     html+=`</div>`;
     // Total
@@ -372,7 +372,7 @@ function renderTable(){
   let html=`<thead><tr><th class="th-hole">H</th>`;for(let p=0;p<playerCount;p++)html+=`<th>${names[p]}</th>`;html+=`</tr></thead><tbody>`;
   for(let h=1;h<=18;h++){const mul=multipliers[h]||1,mt=mul>1?`<span class="multiplier-badge">×${mul}</span>`:"";
     html+=`<tr class="${h===activeHole?"highlight":""}" onclick="goHole(${h})" style="cursor:pointer"><td class="td-hole">${h}${mt}</td>`;
-    for(let p=0;p<playerCount;p++){const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0,mn=minuses[h]?.[p]||0;let c="";if(m.key!=="none")c+=m.emoji;if(b>0)c+=(c?" ":"")+`<span class="bonus-tag">🏅${b}</span>`;if(mn<0)c+=(c?" ":"")+`<span class="minus-tag">▲${Math.abs(mn)}</span>`;const t=m.points*mul+b+mn;if(t!==0)c+=` <span class="pts" style="${t<0?"color:#dc2626":""}">${t>0?"+":""}${t}</span>`;html+=`<td class="medal-cell">${c}</td>`;}
+    for(let p=0;p<playerCount;p++){const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0,mn=minuses[h]?.[p]||0;let c="";if(m.key!=="none")c+=m.emoji;if(b>0)c+=(c?" ":"")+`<span class="bonus-tag">🏅${b}</span>`;if(mn<0)c+=(c?" ":"")+`<span class="minus-tag">▲${Math.abs(mn)}</span>`;const t=m.points*mul+b+mn*mul;if(t!==0)c+=` <span class="pts" style="${t<0?"color:#dc2626":""}">${t>0?"+":""}${t}</span>`;html+=`<td class="medal-cell">${c}</td>`;}
     html+=`</tr>`;}
   html+=`<tr class="front-back"><td class="td-hole">前半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${front[p]}</td>`;html+=`</tr>`;
   html+=`<tr class="front-back"><td class="td-hole">後半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${back[p]}</td>`;html+=`</tr>`;
