@@ -312,7 +312,7 @@ function startGame(){
   document.getElementById("setup-screen").classList.add("hidden");document.getElementById("history-screen").classList.add("hidden");
   document.getElementById("game-screen").classList.remove("hidden");document.getElementById("save-msg").classList.add("hidden");renderAll();
 }
-function backToSetup(){document.getElementById("game-screen").classList.add("hidden");document.getElementById("setup-screen").classList.remove("hidden");updateHistoryBtn();}
+function backToSetup(){if(!confirm("設定画面に戻りますか？\n保存していないデータは失われます"))return;document.getElementById("game-screen").classList.add("hidden");document.getElementById("setup-screen").classList.remove("hidden");updateHistoryBtn();}
 function renderAll(){renderGameInfo();renderScoreboard();renderMoneyBar();renderHoleSelector();renderHoleCard();renderTable();}
 
 function renderGameInfo(){const box=document.getElementById("game-info");const dd=gameDate?gameDate.replace(/-/g,"/"):"";const parts=[];if(dd)parts.push(`<span class="gi-text">📅 ${dd}</span>`);if(courseName)parts.push(`<span class="gi-text">🏌️ ${courseName}</span>`);box.innerHTML=parts.join('<span style="color:#e2e8f0;margin:0 4px">|</span>');box.style.display=parts.length?"flex":"none";}
