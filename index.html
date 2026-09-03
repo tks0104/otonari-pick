@@ -332,7 +332,10 @@ function renderNameInputs(){
       sel.innerHTML=opts;
       sel.onchange=function(){
         if(this.value==="__custom__"){names[i]="";this.style.display="none";const inp=document.getElementById("name-input-"+i);inp.style.display="block";inp.focus();}
-        else if(this.value){names[i]=this.value;}
+        else if(this.value){
+          for(let j=0;j<playerCount;j++){if(j!==i&&names[j]===this.value){showError("⚠️ "+this.value+" は既にプレイヤー"+(j+1)+"に選択されています");this.value=names[i]||"";return;}}
+          names[i]=this.value;
+        }
         else{names[i]=["A","B","C","D"][i];}
       };
       field.appendChild(sel);
