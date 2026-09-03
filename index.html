@@ -180,7 +180,7 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
       <h1 class="title">オ隣ピック集計</h1>
       <p class="subtitle">スコア自動計算</p>
     </div>
-    <div class="field"><label class="label">日付</label><input type="date" class="text-input" id="input-date"></div>
+    <div class="field"><label class="label">日付</label><input type="date" class="text-input" id="input-date" onchange="resetNames()"></div>
     <div class="field"><label class="label">ゴルフ場名</label><input type="text" class="text-input" id="input-course" placeholder="例：霞ヶ関カンツリー倶楽部"></div>
     <div class="field">
       <label class="label">プレイヤー人数</label>
@@ -312,6 +312,7 @@ function checkDuplicate(hole,player,key){
 }
 
 function setPlayerCount(n){playerCount=n;document.getElementById("btn-3p").className="toggle-btn"+(n===3?" active":"");document.getElementById("btn-4p").className="toggle-btn"+(n===4?" active":"");renderNameInputs();renderPointsRef();}
+function resetNames(){names=["A","B","C","D"];renderNameInputs();}
 function renderNameInputs(){
   const box=document.getElementById("name-inputs");box.innerHTML="";
   const members=loadMembers();
