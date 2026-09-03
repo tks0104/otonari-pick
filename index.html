@@ -36,6 +36,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .point-chip .pt-val { color: #64748b; }
 .start-btn { width: 100%; padding: 14px 0; background: #16a34a; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; letter-spacing: 1px; }
 .history-btn { width: 100%; padding: 12px 0; background: #fff; color: #166534; border: 2px solid #16a34a; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+.member-btn { width: 100%; padding: 12px 0; background: #fff; color: #2563eb; border: 2px solid #2563eb; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+
+/* Member management screen */
+.member-card { background: #fff; border-radius: 16px; padding: 24px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.member-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.member-title { font-size: 18px; font-weight: 800; color: #2563eb; }
+.member-add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.member-add-input { flex: 1; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; }
+.member-add-input:focus { border-color: #2563eb; }
+.member-add-btn { padding: 10px 16px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.member-list { list-style: none; }
+.member-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 6px; }
+.member-name { font-size: 15px; font-weight: 600; color: #1e293b; }
+.member-del { background: none; border: 1px solid #fca5a5; border-radius: 8px; color: #dc2626; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
+.member-empty { text-align: center; color: #94a3b8; font-size: 14px; padding: 20px 0; }
 
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; }
 .back-btn { background: none; border: none; font-size: 14px; color: #16a34a; font-weight: 600; cursor: pointer; }
@@ -170,7 +185,21 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
     </div>
     <div class="field"><label class="label">ポイント配分</label><div id="points-ref" class="points-ref"></div></div>
     <button class="start-btn" onclick="startGame()">スタート</button>
+    <button class="member-btn" onclick="showMembers()" id="member-open-btn">👥 メンバー管理</button>
     <button class="history-btn" onclick="showHistory()" id="history-open-btn">📋 保存した記録を見る</button>
+  </div>
+
+  <!-- Member Management Screen -->
+  <div id="member-screen" class="hidden member-card">
+    <div class="member-header">
+      <h2 class="member-title">👥 メンバー管理</h2>
+      <button class="back-btn" onclick="closeMembers()">← 戻る</button>
+    </div>
+    <div class="member-add-row">
+      <input type="text" class="member-add-input" id="member-add-input" placeholder="名前を入力">
+      <button class="member-add-btn" onclick="addMember()">追加</button>
+    </div>
+    <div id="member-list"></div>
   </div>
 
   <div id="game-screen" class="hidden">
@@ -224,8 +253,11 @@ const MINUS_OPTIONS = [0,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12];
 let playerCount=4, names=["A","B","C","D"], scores={}, bonuses={}, minuses={}, multipliers={};
 let activeHole=1, rate=100, gameDate="", courseName="", currentRecordId=null;
 const STORAGE_KEY = "golf_olympic_records";
+const MEMBERS_KEY = "golf_olympic_members";
 
 function getMedals() { return playerCount===3?MEDALS_3:MEDALS_4; }
+function loadMembers(){try{return JSON.parse(localStorage.getItem(MEMBERS_KEY))||[];}catch(e){return[];}}
+function saveMembers(m){localStorage.setItem(MEMBERS_KEY,JSON.stringify(m));}
 function initScores() {
   scores={}; bonuses={}; minuses={}; multipliers={};
   for(let h=1;h<=18;h++){scores[h]={};bonuses[h]={};minuses[h]={};multipliers[h]=1;for(let p=0;p<playerCount;p++){scores[h][p]="none";bonuses[h][p]=0;minuses[h][p]=0;}}
@@ -251,7 +283,24 @@ function checkDuplicate(hole,player,key){
 }
 
 function setPlayerCount(n){playerCount=n;document.getElementById("btn-3p").className="toggle-btn"+(n===3?" active":"");document.getElementById("btn-4p").className="toggle-btn"+(n===4?" active":"");renderNameInputs();renderPointsRef();}
-function renderNameInputs(){const box=document.getElementById("name-inputs");box.innerHTML="";for(let i=0;i<playerCount;i++){const inp=document.createElement("input");inp.className="name-input";inp.value=names[i]||"";inp.placeholder="プレイヤー "+(i+1);inp.oninput=function(){names[i]=this.value;};box.appendChild(inp);}}
+function renderNameInputs(){
+  const box=document.getElementById("name-inputs");box.innerHTML="";
+  const members=loadMembers();
+  let dlHtml='<datalist id="member-datalist">';
+  members.forEach(m=>{dlHtml+=`<option value="${m}">`;});
+  dlHtml+='</datalist>';
+  box.innerHTML=dlHtml;
+  for(let i=0;i<playerCount;i++){
+    const inp=document.createElement("input");
+    inp.className="name-input";
+    inp.value=names[i]||"";
+    inp.placeholder="プレイヤー "+(i+1);
+    inp.setAttribute("list","member-datalist");
+    inp.setAttribute("autocomplete","off");
+    inp.oninput=function(){names[i]=this.value;};
+    box.appendChild(inp);
+  }
+}
 function renderPointsRef(){const box=document.getElementById("points-ref");let html=getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");html+=`<div class="point-chip"><span>🏅</span><span class="pt-label">追加</span><span class="pt-val">1〜10</span></div>`;html+=`<div class="point-chip"><span>📉</span><span class="pt-label">マイナス</span><span class="pt-val">-1〜-12</span></div>`;box.innerHTML=html;}
 function changeRate(val){rate=Number(val);document.getElementById("rate-setup").value=rate;document.getElementById("rate-game").value=rate;renderAll();}
 
@@ -354,6 +403,27 @@ function loadRecord(id){
   document.getElementById("rate-game").value=rate;document.getElementById("history-screen").classList.add("hidden");document.getElementById("setup-screen").classList.add("hidden");document.getElementById("game-screen").classList.remove("hidden");document.getElementById("save-msg").classList.add("hidden");renderAll();
 }
 function deleteRecord(id){if(!confirm("この記録を削除しますか？"))return;saveRecords(loadRecords().filter(r=>r.id!==id));renderHistory();}
+
+/* Member Management */
+function showMembers(){document.getElementById("setup-screen").classList.add("hidden");document.getElementById("member-screen").classList.remove("hidden");renderMemberList();}
+function closeMembers(){document.getElementById("member-screen").classList.add("hidden");document.getElementById("setup-screen").classList.remove("hidden");renderNameInputs();}
+function addMember(){
+  const inp=document.getElementById("member-add-input");
+  const name=inp.value.trim();
+  if(!name)return;
+  const members=loadMembers();
+  if(members.includes(name)){showError("⚠️ "+name+" は既に登録されています");return;}
+  members.push(name);saveMembers(members);inp.value="";renderMemberList();
+}
+function deleteMember(name){
+  if(!confirm(name+" を削除しますか？"))return;
+  saveMembers(loadMembers().filter(m=>m!==name));renderMemberList();
+}
+function renderMemberList(){
+  const members=loadMembers(),box=document.getElementById("member-list");
+  if(!members.length){box.innerHTML='<div class="member-empty">メンバーが登録されていません</div>';return;}
+  box.innerHTML='<div class="member-list">'+members.map(m=>`<div class="member-item"><span class="member-name">${m}</span><button class="member-del" onclick="deleteMember('${m.replace(/'/g,"\\'")}')">削除</button></div>`).join("")+'</div>';
+}
 
 document.getElementById("input-date").value=todayStr();renderNameInputs();renderPointsRef();updateHistoryBtn();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
