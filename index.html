@@ -134,7 +134,7 @@ td.money-minus { color: #dc2626; font-weight: 800; }
 td.money-zero { color: #94a3b8; font-weight: 800; }
 .medal-cell { font-size: 12px; white-space: nowrap; }
 .medal-cell .pts { font-size: 11px; color: #64748b; }
-.medal-cell .bonus-tag { font-size: 10px; color: #7c3aed; font-weight: 700; }
+.medal-cell .bonus-tag { font-size: 10px; color: #2563eb; font-weight: 700; }
 .medal-cell .minus-tag { font-size: 10px; color: #dc2626; font-weight: 700; }
 
 .history-card { background: #fff; border-radius: 16px; padding: 24px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
@@ -348,7 +348,7 @@ function renderHoleCard(){
     html+=`</div>`;
     // Bonus row
     html+=`<div class="medal-section-label">追加メダル <span style="color:#2563eb">📈</span>（倍率対象外）</div><div class="bonus-row">`;
-    for(const b of BONUS_OPTIONS){const sel=cb===b;html+=`<button class="bonus-btn${sel?" selected":""}" onclick="selectBonus(${activeHole},${p},${b})">${b===0?"—":b}</button>`;}
+    for(const b of BONUS_OPTIONS){const sel=cb===b;html+=`<button class="bonus-btn${sel?" selected":""}" onclick="selectBonus(${activeHole},${p},${b})">${b===0?"—":"+"+b}</button>`;}
     html+=`</div>`;
     // Minus row
     html+=`<div class="medal-section-label">マイナスメダル 📉${mul>1?` <span class="multiplier-badge">×${mul}</span>`:""}</div><div class="minus-row">`;
@@ -372,7 +372,7 @@ function renderTable(){
   let html=`<thead><tr><th class="th-hole">H</th>`;for(let p=0;p<playerCount;p++)html+=`<th>${names[p]}</th>`;html+=`</tr></thead><tbody>`;
   for(let h=1;h<=18;h++){const mul=multipliers[h]||1,mt=mul>1?`<span class="multiplier-badge">×${mul}</span>`:"";
     html+=`<tr class="${h===activeHole?"highlight":""}" onclick="goHole(${h})" style="cursor:pointer"><td class="td-hole">${h}${mt}</td>`;
-    for(let p=0;p<playerCount;p++){const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0,mn=minuses[h]?.[p]||0;let c="";if(m.key!=="none")c+=m.emoji;if(b>0)c+=(c?" ":"")+`<span class="bonus-tag">🏅${b}</span>`;if(mn<0)c+=(c?" ":"")+`<span class="minus-tag">▲${Math.abs(mn)}</span>`;const t=m.points*mul+b+mn*mul;if(t!==0)c+=` <span class="pts" style="${t<0?"color:#dc2626":""}">${t>0?"+":""}${t}</span>`;html+=`<td class="medal-cell">${c}</td>`;}
+    for(let p=0;p<playerCount;p++){const m=findMedal(scores[h]?.[p]),b=bonuses[h]?.[p]||0,mn=minuses[h]?.[p]||0;let c="";if(m.key!=="none")c+=m.emoji;if(b>0)c+=(c?" ":"")+`<span class="bonus-tag">📈+${b}</span>`;if(mn<0)c+=(c?" ":"")+`<span class="minus-tag">📉${mn*mul}</span>`;const t=m.points*mul+b+mn*mul;if(t!==0)c+=` <span class="pts" style="${t<0?"color:#dc2626":""}">${t>0?"+":""}${t}</span>`;html+=`<td class="medal-cell">${c}</td>`;}
     html+=`</tr>`;}
   html+=`<tr class="front-back"><td class="td-hole">前半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${front[p]}</td>`;html+=`</tr>`;
   html+=`<tr class="front-back"><td class="td-hole">後半</td>`;for(let p=0;p<playerCount;p++)html+=`<td>${back[p]}</td>`;html+=`</tr>`;
