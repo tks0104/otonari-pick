@@ -51,12 +51,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .member-name { font-size: 15px; font-weight: 600; color: #1e293b; }
 .member-del { background: none; border: 1px solid #fca5a5; border-radius: 8px; color: #dc2626; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
 .member-empty { text-align: center; color: #94a3b8; font-size: 14px; padding: 20px 0; }
-.name-field { margin-bottom: 12px; }
+.name-field { margin-bottom: 10px; }
 .name-field-label { font-size: 11px; color: #94a3b8; font-weight: 600; margin-bottom: 4px; }
-.member-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.member-chip { padding: 6px 12px; border: 2px solid #e2e8f0; border-radius: 20px; background: #fff; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.15s; }
-.member-chip:active { background: #f0fdf4; border-color: #16a34a; }
-.member-chip.used { opacity: 0.35; pointer-events: none; }
+.name-select { display: block; width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; background: #fff; color: #1e293b; appearance: auto; margin-bottom: 4px; }
+.name-select:focus { border-color: #16a34a; }
 
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; }
 .back-btn { background: none; border: none; font-size: 14px; color: #16a34a; font-weight: 600; cursor: pointer; }
@@ -326,37 +324,32 @@ function renderNameInputs(){
     const field=document.createElement("div");field.className="name-field";
     const label=document.createElement("div");label.className="name-field-label";label.textContent="プレイヤー "+(i+1);
     field.appendChild(label);
-    const inp=document.createElement("input");
-    inp.className="name-input";
-    inp.value=names[i]||"";
-    inp.placeholder="名前を入力";
-    inp.id="name-input-"+i;
-    inp.oninput=function(){names[i]=this.value;updateChips();};
-    inp.onfocus=function(){if(["A","B","C","D"].includes(this.value)){this.value="";names[i]="";updateChips();}};
-    field.appendChild(inp);
     if(members.length>0){
-      const chips=document.createElement("div");chips.className="member-chips";chips.id="chips-"+i;
-      field.appendChild(chips);
+      const sel=document.createElement("select");sel.className="name-select";sel.id="name-select-"+i;
+      let opts='<option value="">▼ メンバーを選択</option>';
+      members.forEach(m=>{const selected=names[i]===m?" selected":"";opts+=`<option value="${m}"${selected}>${m}</option>`;});
+      opts+='<option value="__custom__">✏️ 直接入力</option>';
+      sel.innerHTML=opts;
+      sel.onchange=function(){
+        if(this.value==="__custom__"){names[i]="";this.style.display="none";const inp=document.getElementById("name-input-"+i);inp.style.display="block";inp.focus();}
+        else if(this.value){names[i]=this.value;}
+        else{names[i]=["A","B","C","D"][i];}
+      };
+      field.appendChild(sel);
     }
+    const inp=document.createElement("input");inp.className="name-input";inp.id="name-input-"+i;
+    inp.placeholder="名前を入力";
+    if(members.length>0){
+      const isCustom=names[i]&&!members.includes(names[i])&&!["A","B","C","D"].includes(names[i]);
+      if(isCustom){inp.value=names[i];inp.style.display="block";const sel=document.getElementById("name-select-"+i);if(sel)sel.style.display="none";}
+      else{inp.style.display="none";}
+    }else{
+      inp.value=names[i]||"";
+      inp.onfocus=function(){if(["A","B","C","D"].includes(this.value)){this.value="";names[i]="";}};
+    }
+    inp.oninput=function(){names[i]=this.value;};
+    field.appendChild(inp);
     box.appendChild(field);
-  }
-  updateChips();
-}
-function updateChips(){
-  const members=loadMembers();
-  if(!members.length)return;
-  const usedNames=names.slice(0,playerCount).filter(n=>n&&!["A","B","C","D"].includes(n));
-  for(let i=0;i<playerCount;i++){
-    const chips=document.getElementById("chips-"+i);
-    if(!chips)continue;
-    chips.innerHTML="";
-    members.forEach(m=>{
-      const btn=document.createElement("button");btn.className="member-chip";btn.textContent=m;btn.type="button";
-      if(names[i]===m){btn.style.borderColor="#16a34a";btn.style.background="#f0fdf4";btn.style.color="#166534";}
-      else if(usedNames.includes(m)){btn.classList.add("used");}
-      btn.onclick=function(){names[i]=m;document.getElementById("name-input-"+i).value=m;updateChips();};
-      chips.appendChild(btn);
-    });
   }
 }
 function renderPointsRef(){const box=document.getElementById("points-ref");let html=getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");html+=`<div class="point-chip"><span style="color:#2563eb">📈</span><span class="pt-label">追加</span><span class="pt-val">1〜10</span></div>`;html+=`<div class="point-chip"><span>📉</span><span class="pt-label">マイナスメダル</span><span class="pt-val">-1〜-12</span></div>`;box.innerHTML=html;}
