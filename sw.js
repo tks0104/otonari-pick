@@ -1,4 +1,4 @@
-const CACHE_NAME = 'otonari-pick-v2';
+const CACHE_NAME = 'otonari-pick-v3';
 const ASSETS = [
   './',
   './index.html',
