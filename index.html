@@ -171,6 +171,14 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
 .hi-result.zero { color: #94a3b8; }
 .hi-actions { display: flex; gap: 8px; margin-top: 8px; }
 .hi-delete { background: none; border: 1px solid #fca5a5; border-radius: 8px; color: #dc2626; font-size: 11px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
+.year-btn { width: 100%; padding: 14px 16px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; font-weight: 800; color: #1e293b; cursor: pointer; margin-bottom: 8px; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; }
+.year-btn:active { background: #f0fdf4; border-color: #16a34a; }
+.year-btn .year-label { display: flex; align-items: center; gap: 8px; }
+.year-btn .year-count { font-size: 12px; color: #94a3b8; font-weight: 600; }
+.year-btn .year-arrow { font-size: 14px; color: #94a3b8; transition: transform 0.2s; }
+.year-btn.open .year-arrow { transform: rotate(90deg); }
+.year-records { display: none; margin-bottom: 16px; }
+.year-records.open { display: block; }
 
 .hidden { display: none; }
 </style>
@@ -505,8 +513,28 @@ function renderSummary(){
 function renderHistory(){
   const recs=loadRecords(),box=document.getElementById("history-list");
   if(!recs.length){box.innerHTML='<div class="history-empty">保存された記録はありません</div>';return;}
-  box.innerHTML=recs.map(r=>{const res=r.names.map((n,i)=>{const v=r.money[i],c=v>0?"plus":v<0?"minus":"zero";return`<span class="hi-result ${c}">${n}: ${formatMoney(v)}</span>`;}).join("");
-    return`<div class="history-item" onclick="loadRecord(${r.id})"><div class="hi-top"><span class="hi-date">${(r.date||"").replace(/-/g,"/")}</span><span class="hi-course">${r.course||"—"}</span></div><div class="hi-players">${r.names.join(", ")}（${r.playerCount}人 / ¥${r.rate}）</div><div class="hi-results">${res}</div><div class="hi-actions"><button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})">🗑 削除</button></div></div>`;}).join("");
+  // Group by year
+  const groups={};
+  recs.forEach(r=>{const y=r.date?r.date.substring(0,4):"不明";if(!groups[y])groups[y]=[];groups[y].push(r);});
+  const years=Object.keys(groups).sort().reverse();
+  let html="";
+  years.forEach((y,idx)=>{
+    const count=groups[y].length;
+    const openClass=idx===0?"open":"";
+    html+=`<button class="year-btn ${openClass}" onclick="toggleYear('year-${y}',this)"><span class="year-label">📅 ${y}年 <span class="year-count">${count}件</span></span><span class="year-arrow">▶</span></button>`;
+    html+=`<div class="year-records ${openClass}" id="year-${y}">`;
+    groups[y].forEach(r=>{
+      const res=r.names.map((n,i)=>{const v=r.money[i],c=v>0?"plus":v<0?"minus":"zero";return`<span class="hi-result ${c}">${n}: ${formatMoney(v)}</span>`;}).join("");
+      html+=`<div class="history-item" onclick="loadRecord(${r.id})"><div class="hi-top"><span class="hi-date">${(r.date||"").replace(/-/g,"/")}</span><span class="hi-course">${r.course||"—"}</span></div><div class="hi-players">${r.names.join(", ")}（${r.playerCount}人 / ¥${r.rate}）</div><div class="hi-results">${res}</div><div class="hi-actions"><button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})">🗑 削除</button></div></div>`;
+    });
+    html+=`</div>`;
+  });
+  box.innerHTML=html;
+}
+function toggleYear(id,btn){
+  const el=document.getElementById(id);
+  el.classList.toggle("open");
+  btn.classList.toggle("open");
 }
 function loadRecord(id){
   const r=loadRecords().find(x=>x.id===id);if(!r)return;
