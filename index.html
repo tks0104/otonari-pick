@@ -60,7 +60,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .back-btn { background: none; border: none; font-size: 14px; color: #16a34a; font-weight: 600; cursor: pointer; }
 .header-title { font-size: 17px; font-weight: 800; color: #166534; }
 .rate-badge { display: flex; align-items: center; gap: 4px; }
-.rate-inline { padding: 4px 8px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff; outline: none; color: #1e293b; }
+.rate-inline { padding: 4px 8px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff; outline: none; color: #1e293b; appearance: auto; -webkit-appearance: auto; }
 
 .game-info { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 12px; background: #fff; border-radius: 10px; font-size: 12px; color: #64748b; border: 1px solid #e2e8f0; }
 .game-info .gi-text { font-weight: 600; color: #475569; }
@@ -207,7 +207,7 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
       <select class="rate-select" id="rate-setup" onchange="onRateChange(this)">
         <option value="100">¥100</option><option value="200">¥200</option><option value="300">¥300</option><option value="400">¥400</option><option value="500">¥500</option><option value="__custom__">✏️ 直接入力</option>
       </select>
-      <input type="number" class="text-input" id="rate-input" value="" min="100" step="100" placeholder="金額を入力" onchange="rate=Number(this.value);document.getElementById('rate-game').value=rate" oninput="rate=Number(this.value);document.getElementById('rate-game').value=rate" style="margin-bottom:0;display:none">
+      <input type="number" class="text-input" id="rate-input" value="" min="100" step="100" placeholder="金額を入力" onchange="rate=Number(this.value);document.getElementById('rate-game').value=rate" onblur="if(this.value){rate=Number(this.value);document.getElementById('rate-game').value=rate}" style="margin-bottom:0;display:none">
     </div>
     <div class="field"><label class="label">ポイント配分</label><div id="points-ref" class="points-ref"></div></div>
     <button class="start-btn" onclick="startGame()">スタート</button>
@@ -234,7 +234,7 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
       <h2 class="header-title">⛳ オ隣ピック集計</h2>
       <div class="rate-badge">
         <span style="font-size:12px;color:#64748b;font-weight:600">¥</span>
-        <input type="number" class="rate-inline" id="rate-game" value="100" min="100" step="100" style="width:70px" onchange="changeRate(this.value)" oninput="changeRate(this.value)">
+        <input type="number" class="rate-inline" id="rate-game" value="100" min="100" step="100" style="width:80px" onchange="changeRate(this.value)">
       </div>
     </div>
     <div id="game-info" class="game-info"></div>
@@ -404,7 +404,7 @@ function renderHoleCard(){
   const medals=getMedals(),box=document.getElementById("hole-card"),mul=multipliers[activeHole]||1;
   let mulOpts="";
   let html=`<div class="hole-card-header"><button class="hole-nav" onclick="goHole(${Math.max(1,activeHole-1)})" ${activeHole===1?"disabled":""}>◀</button><h3 class="hole-number">Hole ${activeHole}</h3><button class="hole-nav" onclick="goHole(${Math.min(18,activeHole+1)})" ${activeHole===18?"disabled":""}>▶</button></div>
-    <div class="multiplier-area"><span class="multiplier-label">倍率</span><select class="multiplier-select" id="mul-sel-${activeHole}" onchange="onMulChange(${activeHole},this)"><option value="1"${mul===1?" selected":""}>1倍</option><option value="2"${mul===2?" selected":""}>2倍</option><option value="3"${mul===3?" selected":""}>3倍</option><option value="4"${mul===4?" selected":""}>4倍</option><option value="5"${mul===5?" selected":""}>5倍</option><option value="__custom__"${mul>5?" selected":""}>✏️ 直接入力</option></select><input type="number" class="multiplier-select" id="mul-input-${activeHole}" value="${mul}" min="1" step="1" style="width:60px;display:${mul>5?"inline-block":"none"}" onchange="setMultiplier(${activeHole},Number(this.value))" oninput="setMultiplier(${activeHole},Number(this.value))"><span style="font-size:13px;font-weight:700;color:#92400e">${mul>5?"倍":""}</span></div>`;
+    <div class="multiplier-area"><span class="multiplier-label">倍率</span><select class="multiplier-select" id="mul-sel-${activeHole}" onchange="onMulChange(${activeHole},this)"><option value="1"${mul===1?" selected":""}>1倍</option><option value="2"${mul===2?" selected":""}>2倍</option><option value="3"${mul===3?" selected":""}>3倍</option><option value="4"${mul===4?" selected":""}>4倍</option><option value="5"${mul===5?" selected":""}>5倍</option><option value="__custom__"${mul>5?" selected":""}>✏️ 直接入力</option></select><input type="number" class="multiplier-select" id="mul-input-${activeHole}" value="${mul}" min="1" step="1" style="width:60px;display:${mul>5?"inline-block":"none"}" onchange="setMultiplier(${activeHole},Number(this.value))" onblur="if(this.value)setMultiplier(${activeHole},Number(this.value))"><span style="font-size:13px;font-weight:700;color:#92400e">${mul>5?"倍":""}</span></div>`;
 
   for(let p=0;p<playerCount;p++){
     const cm=scores[activeHole]?.[p]||"none",cb=bonuses[activeHole]?.[p]||0,cmn=minuses[activeHole]?.[p]||0;
