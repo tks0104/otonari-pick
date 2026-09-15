@@ -207,7 +207,7 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
       <select class="rate-select" id="rate-setup" onchange="onRateChange(this)">
         <option value="100">¥100</option><option value="200">¥200</option><option value="300">¥300</option><option value="400">¥400</option><option value="500">¥500</option><option value="__custom__">✏️ 直接入力</option>
       </select>
-      <input type="number" class="text-input" id="rate-input" value="" min="1" step="1" placeholder="金額を入力" onchange="rate=Number(this.value);document.getElementById('rate-game').value=rate" oninput="rate=Number(this.value);document.getElementById('rate-game').value=rate" style="margin-bottom:0;display:none">
+      <input type="number" class="text-input" id="rate-input" value="" min="100" step="100" placeholder="金額を入力" onchange="rate=Number(this.value);document.getElementById('rate-game').value=rate" oninput="rate=Number(this.value);document.getElementById('rate-game').value=rate" style="margin-bottom:0;display:none">
     </div>
     <div class="field"><label class="label">ポイント配分</label><div id="points-ref" class="points-ref"></div></div>
     <button class="start-btn" onclick="startGame()">スタート</button>
@@ -234,7 +234,7 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
       <h2 class="header-title">⛳ オ隣ピック集計</h2>
       <div class="rate-badge">
         <span style="font-size:12px;color:#64748b;font-weight:600">¥</span>
-        <input type="number" class="rate-inline" id="rate-game" value="100" min="1" step="1" style="width:70px" onchange="changeRate(this.value)" oninput="changeRate(this.value)">
+        <input type="number" class="rate-inline" id="rate-game" value="100" min="100" step="100" style="width:70px" onchange="changeRate(this.value)" oninput="changeRate(this.value)">
       </div>
     </div>
     <div id="game-info" class="game-info"></div>
@@ -365,7 +365,7 @@ function renderNameInputs(){
 }
 function renderPointsRef(){const box=document.getElementById("points-ref");let html=getMedals().filter(m=>m.key!=="none").map(m=>`<div class="point-chip"><span>${m.emoji}</span><span class="pt-label">${m.label}</span><span class="pt-val">${m.points}pt</span></div>`).join("");html+=`<div class="point-chip"><span style="color:#2563eb">📈</span><span class="pt-label">追加</span><span class="pt-val">1〜10</span></div>`;html+=`<div class="point-chip"><span>📉</span><span class="pt-label">マイナスメダル</span><span class="pt-val">-1〜-12</span></div>`;box.innerHTML=html;}
 function setRate(val){rate=val;document.getElementById("rate-setup").value=rate;document.getElementById("rate-game").value=rate;}
-function onRateChange(sel){if(sel.value==="__custom__"){var inp=document.getElementById("rate-input");inp.style.display="block";inp.value=rate;inp.focus();}else{rate=Number(sel.value);document.getElementById("rate-input").style.display="none";document.getElementById("rate-game").value=rate;}}
+function onRateChange(sel){if(sel.value==="__custom__"){var inp=document.getElementById("rate-input");inp.style.display="block";inp.value="";inp.focus();}else{rate=Number(sel.value);document.getElementById("rate-input").style.display="none";document.getElementById("rate-game").value=rate;}}
 function changeRate(val){rate=Number(val)||100;document.getElementById("rate-game").value=rate;var sel=document.getElementById("rate-setup");var inp=document.getElementById("rate-input");if([100,200,300,400,500].includes(rate)){sel.value=rate;inp.style.display="none";}else{sel.value="__custom__";inp.style.display="block";inp.value=rate;}renderAll();}
 
 function startGame(){
@@ -435,7 +435,7 @@ function selectMedal(hole,player,key){if(checkDuplicate(hole,player,key))return;
 function selectBonus(hole,player,val){bonuses[hole][player]=val;renderAll();}
 function selectMinus(hole,player,val){if(val<0&&scores[hole][player]!=="none"){showError("⚠️ メダルと同一ホールでは選択できません");return;}minuses[hole][player]=val;renderAll();}
 function setMultiplier(hole,val){multipliers[hole]=val||1;renderAll();}
-function onMulChange(hole,sel){if(sel.value==="__custom__"){var inp=document.getElementById("mul-input-"+hole);inp.style.display="inline-block";inp.value=multipliers[hole];inp.focus();}else{setMultiplier(hole,Number(sel.value));}}
+function onMulChange(hole,sel){if(sel.value==="__custom__"){var inp=document.getElementById("mul-input-"+hole);inp.style.display="inline-block";inp.value="";inp.focus();}else{setMultiplier(hole,Number(sel.value));}}
 
 function renderTable(){
   const totals=calcTotals(1,18),front=calcTotals(1,9),back=calcTotals(10,18),money=calcMoney(totals),max=Math.max(...totals);
