@@ -383,7 +383,7 @@ function startGame(){
   gameDate=document.getElementById("input-date").value||todayStr();courseName=document.getElementById("input-course").value||"";
   initScores();activeHole=1;currentRecordId=null;document.getElementById("rate-game").value=rate;
   document.getElementById("setup-screen").classList.add("hidden");document.getElementById("history-screen").classList.add("hidden");
-  document.getElementById("game-screen").classList.remove("hidden");document.getElementById("save-msg").classList.add("hidden");renderAll();
+  document.getElementById("game-screen").classList.remove("hidden");document.getElementById("save-msg").classList.add("hidden");renderAll();window.scrollTo(0,0);
 }
 function backToSetup(){if(!confirm("設定画面に戻りますか？\n保存していないデータは失われます"))return;document.getElementById("game-screen").classList.add("hidden");document.getElementById("setup-screen").classList.remove("hidden");updateHistoryBtn();}
 function renderAll(){renderGameInfo();renderScoreboard();renderMoneyBar();renderHoleSelector();renderHoleCard();renderTable();}
