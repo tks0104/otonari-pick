@@ -197,6 +197,7 @@ td.money-zero { color: #94a3b8; font-weight: 800; }
     <div class="field">
       <label class="label">プレイヤー人数</label>
       <div class="toggle-row">
+        <button class="toggle-btn" onclick="setPlayerCount(2)" id="btn-2p">2人</button>
         <button class="toggle-btn" onclick="setPlayerCount(3)" id="btn-3p">3人</button>
         <button class="toggle-btn active" onclick="setPlayerCount(4)" id="btn-4p">4人</button>
       </div>
@@ -292,6 +293,12 @@ const MEDALS_3 = [
   { key:"gold", label:"金", emoji:"🥇", points:3, color:"#ca8a04" },
   { key:"diamond", label:"ダイヤ", emoji:"💎", points:6, color:"#2563eb" },
 ];
+const MEDALS_2 = [
+  { key:"none", label:"—", emoji:"", points:0, color:"transparent" },
+  { key:"silver", label:"銀", emoji:"🥈", points:1, color:"#94a3b8" },
+  { key:"gold", label:"金", emoji:"🥇", points:2, color:"#ca8a04" },
+  { key:"diamond", label:"ダイヤ", emoji:"💎", points:4, color:"#2563eb" },
+];
 const BONUS_OPTIONS = [0,1,2,3,4,5,6,7,8,9,10];
 const MINUS_OPTIONS = [0,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12];
 
@@ -300,7 +307,7 @@ let activeHole=1, rate=100, gameDate="", courseName="", currentRecordId=null;
 const STORAGE_KEY = "golf_olympic_records";
 const MEMBERS_KEY = "golf_olympic_members";
 
-function getMedals() { return playerCount===3?MEDALS_3:MEDALS_4; }
+function getMedals() { return playerCount===2?MEDALS_2:playerCount===3?MEDALS_3:MEDALS_4; }
 function loadMembers(){try{return JSON.parse(localStorage.getItem(MEMBERS_KEY))||[];}catch(e){return[];}}
 function saveMembers(m){localStorage.setItem(MEMBERS_KEY,JSON.stringify(m));}
 function initScores() {
@@ -321,13 +328,13 @@ function showError(msg){const el=document.createElement("div");el.className="err
 
 function checkDuplicate(hole,player,key){
   if(key==="none"||key==="diamond")return false;
-  const lowestKey=playerCount===4?"iron":"bronze";
+  const lowestKey=playerCount===4?"iron":playerCount===3?"bronze":"silver";
   if(key===lowestKey){for(let p=0;p<playerCount;p++){if(scores[hole][p]==="diamond"){showError("⚠️ ダイヤ取得者がいるため "+findMedal(lowestKey).label+" は選択できません");return true;}}}
   for(let p=0;p<playerCount;p++){if(p!==player&&scores[hole][p]===key){showError("⚠️ "+findMedal(key).label+" は "+names[p]+" が既に取得しています");return true;}}
   return false;
 }
 
-function setPlayerCount(n){playerCount=n;document.getElementById("btn-3p").className="toggle-btn"+(n===3?" active":"");document.getElementById("btn-4p").className="toggle-btn"+(n===4?" active":"");renderNameInputs();renderPointsRef();}
+function setPlayerCount(n){playerCount=n;document.getElementById("btn-2p").className="toggle-btn"+(n===2?" active":"");document.getElementById("btn-3p").className="toggle-btn"+(n===3?" active":"");document.getElementById("btn-4p").className="toggle-btn"+(n===4?" active":"");renderNameInputs();renderPointsRef();}
 function resetNames(){names=["A","B","C","D"];renderNameInputs();}
 function renderNameInputs(){
   const box=document.getElementById("name-inputs");box.innerHTML="";
